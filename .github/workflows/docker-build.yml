@@ -19,7 +19,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: GITHUB_TOKEN,REPO,APP_NAME,API_SECRET,VITE_API_BASE_URL
           script: |
-            cd ~/hack_test
+            cd /home/ubuntu/test/hack_test
             git pull https://x-access-token:$GITHUB_TOKEN@github.com/$REPO.git main
 
             # Write .env from GitHub secrets (never committed to the repo)
