@@ -234,10 +234,61 @@ function CheckupItemCard({ item }) {
         </div>
       )}
 
-      {!isFree && <PriceEstimate label={item.label} services={(bo.breakdown || []).map(b => b.service_id)} />}
+      <div style={s.actions}>
+        <CalendarButton item={item} costText={costText} />
+        {!isFree && <PriceEstimate label={item.label} services={(bo.breakdown || []).map(b => b.service_id)} />}
+      </div>
 
       <ProviderSearch itemId={item.item_id} label={item.label} />
     </div>
+  )
+}
+
+function ymd(d) {
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
+}
+
+// Due date if the plan gives one in the future, otherwise a reminder a week from now to book it.
+// Age-based items ("due at age 50") have no real date, so they get no button.
+function calendarDate(item) {
+  const due = parseDate(item.next_due)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  if (due) return due > today ? due : today
+  if (item.next_due) return null
+  const inAWeek = new Date(today)
+  inAWeek.setDate(inAWeek.getDate() + 7)
+  return inAWeek
+}
+
+// Opens Google Calendar's "new event" screen pre-filled; the user saves it in their own account.
+function CalendarButton({ item, costText }) {
+  const start = calendarDate(item)
+  if (!start) return null
+  const end = new Date(start)
+  end.setDate(end.getDate() + 1)
+  const details = [
+    item.screens_for && `Screens for: ${item.screens_for}`,
+    costText && `Cost with your policy: ${costText}`,
+    item.best_option?.label,
+    '',
+    'Added from Insurely',
+  ].filter(v => v !== undefined && v !== null && v !== false).join('\n')
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: `Book: ${item.label}`,
+    dates: `${ymd(start)}/${ymd(end)}`,
+    details,
+  })
+  return (
+    <a
+      href={`https://calendar.google.com/calendar/render?${params}`}
+      target="_blank"
+      rel="noreferrer"
+      style={s.calendarBtn}
+    >
+      📅 Put it on calendar
+    </a>
   )
 }
 
@@ -706,12 +757,18 @@ const s = {
   tabCount: { background: '#cbd5e1', color: '#475569', borderRadius: 999, padding: '1px 8px', fontSize: '0.74rem' },
   tabCountActive: { background: '#e0e7ff', color: '#4338ca' },
 
+  actions: { display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start', marginTop: 12 },
+  calendarBtn: {
+    padding: '7px 14px', fontSize: '0.82rem', fontWeight: 600, fontFamily: 'inherit',
+    background: '#fff', color: '#0f172a', border: '1px solid #e2e8f0', borderRadius: 999,
+    cursor: 'pointer', textDecoration: 'none', display: 'inline-block',
+  },
   estimateBtn: {
-    marginTop: 12, padding: '7px 14px', fontSize: '0.82rem', fontWeight: 600, fontFamily: 'inherit',
+    padding: '7px 14px', fontSize: '0.82rem', fontWeight: 600, fontFamily: 'inherit',
     background: '#eef2ff', color: '#4338ca', border: '1px solid #c7d2fe', borderRadius: 999, cursor: 'pointer',
   },
   estimateBox: {
-    marginTop: 12, padding: '12px 14px', borderRadius: 10, fontSize: '0.84rem',
+    width: '100%', padding: '12px 14px', borderRadius: 10, fontSize: '0.84rem',
     background: 'linear-gradient(135deg,#eef2ff,#f0f9ff)', border: '1px solid #e0e7ff',
   },
   estimateLabel: { fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
