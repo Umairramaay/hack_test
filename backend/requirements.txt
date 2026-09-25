@@ -1,6 +1,7 @@
 fastapi
 uvicorn[standard]
 httpx
+openai
 icalendar
 sqlalchemy
 alembic

@@ -5,6 +5,7 @@ __pycache__/
 node_modules/
 frontend/dist/
 data/
+.vscode
 
 
 backend/.venv/
