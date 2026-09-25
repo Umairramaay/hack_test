@@ -20,7 +20,7 @@ def hello():
 
 @app.get("/health")
 def health():
-    return {"status": "ok auto deploy"}
+    return {"status": "ok auto deployasssa"}
 
 
 @app.get("/config-test")
