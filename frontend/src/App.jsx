@@ -25,7 +25,7 @@ export default function App() {
       <h1>Hello World</h1>
 
       <p style={{ color: '#555', fontSize: '0.9rem' }}>
-        API URL: <code>{API_BASE}</code>
+        API URL test: <code>{API_BASE}</code>
       </p>
 
       {loading && <p style={{ color: '#888' }}>Loading…</p>}
