@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
+import { CircleAlert, LoaderCircle, MapPin, RefreshCw, X } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
@@ -58,9 +59,9 @@ delete L.Icon.Default.prototype._getIconUrl
 
 function _makeProviderIcon() {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="38" viewBox="0 0 26 38">
-    <path fill="#059669" stroke="white" stroke-width="1.5" d="M13 0C5.82 0 0 5.82 0 13c0 8.667 13 25 13 25S26 21.667 26 13C26 5.82 20.18 0 13 0z"/>
+    <path fill="#16161d" stroke="white" stroke-width="1.5" d="M13 0C5.82 0 0 5.82 0 13c0 8.667 13 25 13 25S26 21.667 26 13C26 5.82 20.18 0 13 0z"/>
     <circle cx="13" cy="13" r="6.5" fill="white" opacity="0.9"/>
-    <text x="13" y="17" text-anchor="middle" font-size="11" font-weight="bold" fill="#059669">+</text>
+    <text x="13" y="17" text-anchor="middle" font-size="11" font-weight="bold" fill="#16161d">+</text>
   </svg>`
   return L.divIcon({ html: svg, iconSize: [26, 38], iconAnchor: [13, 38], popupAnchor: [0, -40], className: '' })
 }
@@ -99,9 +100,9 @@ function ProviderMap({ userLoc, providers }) {
         .bindPopup(
           `<div style="font-size:13px;line-height:1.5;max-width:200px">` +
           `<strong>${p.name}</strong>` +
-          `<div style="color:#059669;font-size:12px">${p.type}</div>` +
+          `<div style="color:#6b6b76;font-size:12px">${p.type}</div>` +
           (p.address ? `<div style="color:#777;font-size:12px;margin-top:2px">${p.address}</div>` : '') +
-          (p.distance_km != null ? `<div style="color:#059669;font-size:12px;margin-top:2px">${p.distance_km} km away</div>` : '') +
+          (p.distance_km != null ? `<div style="color:#6b6b76;font-size:12px;margin-top:2px">${p.distance_km} km away</div>` : '') +
           `</div>`,
           { maxWidth: 240 }
         )
@@ -119,7 +120,7 @@ function ProviderMap({ userLoc, providers }) {
     return () => { mapRef.current?.remove(); mapRef.current = null }
   }, [userLoc, providers])
 
-  return <div ref={divRef} style={{ height: 260, borderRadius: 8, marginBottom: 12, position: 'relative', zIndex: 0 }} />
+  return <div ref={divRef} style={{ height: 264, borderRadius: 8, marginBottom: 16, position: 'relative', zIndex: 0 }} />
 }
 
 // ─── Provider card ───────────────────────────────────────────────────────────
@@ -133,36 +134,36 @@ function ProviderCard({ provider }) {
     <div style={ps.provCard}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: '0.88rem', color: '#1a1a2e' }}>{provider.name}</div>
-          <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 500, marginTop: 1 }}>{provider.type}</div>
+          <div style={{ fontWeight: 500, fontSize: 14 }}>{provider.name}</div>
+          <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 2 }}>{provider.type}</div>
         </div>
         {provider.distance_km != null && (
-          <span style={{ fontSize: '0.75rem', color: '#6b7280', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          <span className="num" style={{ fontSize: 13, color: 'var(--muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
             {provider.distance_km} km away
           </span>
         )}
       </div>
 
       {provider.opening_hours && provider.opening_hours.length > 0 && (
-        <div style={{ marginTop: 5, fontSize: '0.75rem', color: '#374151', lineHeight: 1.4 }}>
+        <div style={{ marginTop: 4, fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
           {provider.opening_hours.map((h, i) => <div key={i}>{h}</div>)}
         </div>
       )}
 
       {provider.address && (
-        <div style={{ marginTop: 4, fontSize: '0.75rem', color: '#6b7280' }}>{provider.address}</div>
+        <div style={{ marginTop: 4, fontSize: 13, color: 'var(--muted)' }}>{provider.address}</div>
       )}
 
       {provider.phone && (
-        <div style={{ marginTop: 3, fontSize: '0.75rem' }}>
-          <a href={`tel:${provider.phone}`} style={{ color: '#4f46e5', textDecoration: 'none' }}>
+        <div style={{ marginTop: 4, fontSize: 13 }}>
+          <a href={`tel:${provider.phone}`} style={{ color: 'var(--accent)', textDecoration: 'none' }}>
             {provider.phone}
           </a>
         </div>
       )}
 
       {(osmUrl || provider.website) && (
-        <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
           {osmUrl && (
             <a href={osmUrl} target="_blank" rel="noopener noreferrer" style={ps.cardLink}>
               View on map
@@ -222,17 +223,17 @@ export default function ProviderSearch({ itemId, label }) {
 
   if (state === 'idle') {
     return (
-      <button onClick={handleFind} style={ps.findBtn}>
-        📍 Find a place
+      <button onClick={handleFind} className="btn btn-outline">
+        <MapPin size={16} strokeWidth={1.5} /> Find a place
       </button>
     )
   }
 
   if (state === 'locating' || state === 'loading') {
     return (
-      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={ps.miniSpinner} />
-        <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>
+      <div style={{ ...ps.panel, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <LoaderCircle size={16} strokeWidth={1.5} className="spinner" style={{ color: 'var(--muted)' }} />
+        <span className="muted" style={{ fontSize: 14 }}>
           {state === 'locating' ? 'Getting your location…' : 'Searching nearby providers…'}
         </span>
       </div>
@@ -241,21 +242,24 @@ export default function ProviderSearch({ itemId, label }) {
 
   if (state === 'error') {
     return (
-      <div style={{ marginTop: 8 }}>
-        <div style={ps.errorBox}>{errorMsg}</div>
-        <button onClick={handleFind} style={{ ...ps.findBtn, marginTop: 6 }}>Retry</button>
+      <div style={{ ...ps.panel, ...ps.errorBox }}>
+        <CircleAlert size={16} strokeWidth={1.5} style={{ flexShrink: 0 }} />
+        <span style={{ flex: 1 }}>Couldn't find places. {errorMsg}</span>
+        <button onClick={handleFind} className="btn btn-outline"><RefreshCw size={16} strokeWidth={1.5} /> Retry</button>
       </div>
     )
   }
 
   // done
   return (
-    <div style={{ marginTop: 10 }}>
+    <div style={ps.panel}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#374151' }}>
-          Nearby places — {label}
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>
+          Nearby places · {label}
         </span>
-        <button onClick={() => setState('idle')} style={ps.closeBtn}>✕ Close</button>
+        <button onClick={() => setState('idle')} className="btn btn-text" style={{ color: 'var(--muted)' }} aria-label="Close">
+          <X size={16} strokeWidth={1.5} /> Close
+        </button>
       </div>
 
       {providers.length === 0 ? (
@@ -265,7 +269,7 @@ export default function ProviderSearch({ itemId, label }) {
       ) : (
         <>
           {userLoc && <ProviderMap userLoc={userLoc} providers={providers} />}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {providers.map((p, i) => <ProviderCard key={i} provider={p} />)}
           </div>
         </>
@@ -275,68 +279,28 @@ export default function ProviderSearch({ itemId, label }) {
 }
 
 const ps = {
-  findBtn: {
-    marginTop: 8,
-    padding: '4px 11px',
-    fontSize: '0.76rem',
-    fontWeight: 600,
-    background: '#eff6ff',
-    color: '#1d4ed8',
-    border: '1px solid #bfdbfe',
-    borderRadius: 6,
-    cursor: 'pointer',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 4,
-  },
-  miniSpinner: {
-    width: 13,
-    height: 13,
-    borderRadius: '50%',
-    border: '2px solid #e5e7eb',
-    borderTopColor: '#4f46e5',
-    animation: 'spin 0.7s linear infinite',
-    flexShrink: 0,
+  panel: {
+    width: '100%', padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: '#fbfbfc', fontSize: 14,
   },
   errorBox: {
-    padding: '8px 12px',
-    background: '#fef2f2',
-    color: '#991b1b',
-    borderRadius: 6,
-    fontSize: '0.78rem',
-    border: '1px solid #fecaca',
+    display: 'flex', alignItems: 'center', gap: 8, color: 'var(--danger)', background: 'var(--danger-bg)', borderColor: '#fecdca',
   },
   noResults: {
-    padding: '10px 14px',
-    background: '#f8fafc',
-    color: '#6b7280',
-    borderRadius: 6,
-    fontSize: '0.8rem',
-    border: '1px solid #e5e7eb',
-    fontStyle: 'italic',
-  },
-  closeBtn: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: '#9ca3af',
-    fontSize: '0.75rem',
-    padding: '2px 6px',
-    lineHeight: 1,
+    padding: '16px', color: 'var(--muted)', borderRadius: 8, fontSize: 14,
+    border: '1px dashed var(--border-strong)', background: 'var(--surface)', textAlign: 'center',
   },
   provCard: {
-    padding: '9px 12px',
-    border: '1px solid #e5e7eb',
-    borderRadius: 7,
+    padding: '8px 16px',
+    border: '1px solid var(--border)',
+    borderRadius: 8,
     background: '#fff',
   },
   cardLink: {
-    padding: '3px 9px',
-    fontSize: '0.73rem',
-    background: '#f3f4f6',
-    color: '#374151',
-    border: '1px solid #dde2e8',
-    borderRadius: 4,
+    padding: '4px 8px',
+    fontSize: 13,
+    color: 'var(--text)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 6,
     textDecoration: 'none',
     fontWeight: 500,
   },

@@ -1,4 +1,8 @@
 import { useRef, useState } from 'react'
+import {
+  CalendarPlus, Check, ChevronDown, ChevronUp, CircleAlert, CircleCheck, CircleHelp, CircleX,
+  Clock, FileText, Info, LoaderCircle, RefreshCw, Sparkles, Upload,
+} from 'lucide-react'
 import ProviderSearch from './ProviderSearch'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
@@ -10,21 +14,7 @@ const ANALYSIS_STEPS = [
   'Building your plan',
 ]
 
-const BADGE_COLORS = {
-  green: { background: '#dcfce7', color: '#166534' },
-  red: { background: '#fee2e2', color: '#991b1b' },
-  yellow: { background: '#fef3c7', color: '#92400e' },
-  gray: { background: '#f1f5f9', color: '#475569' },
-  blue: { background: '#e0e7ff', color: '#3730a3' },
-}
-
-function Badge({ children, color }) {
-  return (
-    <span style={{ ...(BADGE_COLORS[color] || BADGE_COLORS.gray), padding: '3px 9px', borderRadius: 999, fontSize: '0.74rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
-      {children}
-    </span>
-  )
-}
+const ICON = { size: 16, strokeWidth: 1.5 }
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
@@ -41,8 +31,6 @@ const SERVICE_LABELS = {
   psych_hospital: 'Psychiatric Hospital', ambulance: 'Ambulance',
   medication: 'Medication', care_abroad: 'Care Abroad', sns_fees: 'SNS Fees',
 }
-
-const STRENGTH_COLOR = { official: 'green', guideline: 'blue', general: 'gray' }
 
 function networkText(n) {
   if (!n) return '—'
@@ -87,31 +75,67 @@ function waitingStatus(days, startDate) {
   return { kind: 'waiting', days, eligible, left }
 }
 
+function Tag({ children, icon: Icon, variant }) {
+  return (
+    <span className={`tag${variant ? ` tag-${variant}` : ''}`}>
+      {Icon && <Icon size={14} strokeWidth={1.5} />}
+      {children}
+    </span>
+  )
+}
+
+function Notice({ children }) {
+  return (
+    <div style={s.notice}>
+      <Info {...ICON} style={{ flexShrink: 0, marginTop: 2 }} />
+      <div>{children}</div>
+    </div>
+  )
+}
+
+function EmptyState({ title, children }) {
+  return (
+    <div style={s.empty}>
+      <div style={{ fontWeight: 500 }}>{title}</div>
+      {children && <div className="muted" style={{ marginTop: 4, fontSize: 14 }}>{children}</div>}
+    </div>
+  )
+}
+
 function WaitingCell({ days, startDate }) {
   const w = waitingStatus(days, startDate)
-  if (w.kind === 'none') return <Badge color="green">No wait</Badge>
-  if (w.kind === 'unknown') return <Badge color="gray">{w.days}-day wait</Badge>
+  if (w.kind === 'none') return <Tag icon={Check} variant="green">No wait</Tag>
+  if (w.kind === 'unknown') return <Tag icon={Clock} variant="amber">{w.days}-day wait</Tag>
   if (w.kind === 'active') {
     return (
       <div>
-        <Badge color="green">✓ Covered now</Badge>
-        <div style={s.cellSub}>{w.days}-day wait ended {formatDate(w.eligible)}</div>
+        <Tag icon={Check} variant="green">Covered now</Tag>
+        <div style={s.cellSub}>Wait ended {formatDate(w.eligible)}</div>
       </div>
     )
   }
   return (
     <div>
-      <Badge color="yellow">{w.left} days left</Badge>
+      <Tag icon={Clock} variant="amber"><span className="num">{w.left}</span> days left</Tag>
       <div style={s.cellSub}>Covered from {formatDate(w.eligible)}</div>
     </div>
   )
+}
+
+const COVERAGE_TAG = { free: 'green', not_covered: 'red' }
+
+function CoverageValue({ n }) {
+  const variant = COVERAGE_TAG[n?.type]
+  return variant ? <Tag variant={variant}>{networkText(n)}</Tag> : networkText(n)
 }
 
 // ─── Coverage (what was read from the PDF) ───────────────────────────────────
 
 function CoverageSection({ coverage }) {
   const [showAll, setShowAll] = useState(false)
-  if (!coverage) return null
+  if (!coverage) {
+    return <EmptyState title="No coverage found">We couldn't read coverage details from this document.</EmptyState>
+  }
 
   const startDate = coverage.policy_start_date
   const hasStart = !!parseDate(startDate)
@@ -127,40 +151,43 @@ function CoverageSection({ coverage }) {
 
   return (
     <section style={s.section}>
-      <h2 style={s.h2}>Your coverage</h2>
-      <p style={s.muted}>Read directly from your policy document</p>
-
       <div style={s.statGrid}>
         <Stat label="Insurer" value={coverage.insurer || 'Unknown'} sub={coverage.product_as_written} />
         <Stat label="Services covered" value={mentioned.length} sub={`of ${rows.length} checked`} />
-        {hasStart && <Stat label="Usable today" value={activeNow} sub={`as of ${formatDate(new Date())}`} />}
-        {hasStart && <Stat label="Still in waiting period" value={inWaiting} accent={inWaiting > 0 ? '#b45309' : undefined} />}
+        {hasStart && <Stat label="Usable today" value={activeNow} color="#15803d" sub={`as of ${formatDate(new Date())}`} />}
+        {hasStart && <Stat label="In waiting period" value={inWaiting} color={inWaiting > 0 ? '#c2410c' : undefined} sub={`policy started ${formatDate(parseDate(startDate))}`} />}
       </div>
 
-      <div style={s.tableWrap}>
-        <table style={s.table}>
-          <thead>
-            <tr>
-              {['Service', 'In-network', 'Out-of-network', 'Annual limit', 'Waiting period'].map(h => (
-                <th key={h} style={s.th}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((row, i) => (
-              <tr key={row.service_id || i}>
-                <td style={{ ...s.td, fontWeight: 600, color: '#0f172a' }}>{SERVICE_LABELS[row.service_id] || row.service_id}</td>
-                <td style={s.td}>{networkText(row.network)}</td>
-                <td style={s.td}>{networkText(row.out_of_network)}</td>
-                <td style={s.td}>{row.limit_pool ? (poolMap[row.limit_pool] || row.limit_pool) : '—'}</td>
-                <td style={s.td}><WaitingCell days={row.waiting_days} startDate={startDate} /></td>
+      {mentioned.length === 0 && !showAll ? (
+        <EmptyState title="No covered services found">
+          The document didn't list any services we recognise.
+        </EmptyState>
+      ) : (
+        <div className="card" style={{ overflowX: 'auto' }}>
+          <table className="table">
+            <thead>
+              <tr>
+                {['Service', 'In-network', 'Out-of-network', 'Annual limit', 'Waiting period'].map(h => (
+                  <th key={h}>{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {visible.map((row, i) => (
+                <tr key={row.service_id || i}>
+                  <td style={{ fontWeight: 500 }}>{SERVICE_LABELS[row.service_id] || row.service_id}</td>
+                  <td className="num"><CoverageValue n={row.network} /></td>
+                  <td className="num"><CoverageValue n={row.out_of_network} /></td>
+                  <td className="num">{row.limit_pool ? (poolMap[row.limit_pool] || row.limit_pool) : '—'}</td>
+                  <td><WaitingCell days={row.waiting_days} startDate={startDate} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
       {hidden > 0 && (
-        <button onClick={() => setShowAll(v => !v)} style={s.linkBtn}>
+        <button onClick={() => setShowAll(v => !v)} className="btn btn-text" style={{ marginTop: 16 }}>
           {showAll ? 'Hide services not in your policy' : `Show ${hidden} services not mentioned in your policy`}
         </button>
       )}
@@ -168,11 +195,11 @@ function CoverageSection({ coverage }) {
   )
 }
 
-function Stat({ label, value, sub, accent }) {
+function Stat({ label, value, sub, color }) {
   return (
-    <div style={s.stat}>
+    <div className="card" style={s.stat}>
       <div style={s.statLabel}>{label}</div>
-      <div style={{ ...s.statValue, color: accent || '#0f172a' }}>{value}</div>
+      <div className="num" style={{ ...s.statValue, ...(color ? { color } : {}) }}>{value}</div>
       {sub && <div style={s.statSub}>{sub}</div>}
     </div>
   )
@@ -180,34 +207,33 @@ function Stat({ label, value, sub, accent }) {
 
 // ─── Checkup plan ────────────────────────────────────────────────────────────
 
-function CheckupItemCard({ item }) {
+function CheckupItemCard({ item, insurer }) {
   const [open, setOpen] = useState(false)
   const bo = item.best_option || {}
 
   const isFree = bo.source === 'insurance_checkup' || bo.source === 'sns'
   const costText = isFree ? 'Free' : (bo.cost_text || (bo.cost_eur != null ? `€${bo.cost_eur}` : '—'))
   const hasEvidence = bo.source === 'insurance_policy' && (!!bo.evidence?.length || !!bo.breakdown?.length)
+  const showStatus = item.status && item.status !== 'eligible now' && item.status !== 'note'
 
   return (
-    <div style={s.card}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+    <div className="plan-row">
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={s.cardTitle}>{item.label}</span>
-            {item.status && item.status !== 'eligible now' && item.status !== 'note' && (
-              <Badge color="yellow">{item.status}</Badge>
+            <span style={s.rowTitle}>{item.label}</span>
+            {showStatus && <Tag variant={item.status === 'due now' ? 'amber' : undefined}>{item.status}</Tag>}
+            {item.strength && item.strength !== 'general' && (
+              <Tag variant={item.strength === 'official' ? 'green' : 'blue'}>{item.strength}</Tag>
             )}
           </div>
-          {item.screens_for && <div style={s.cardSub}>Screens for {item.screens_for}</div>}
-          <div style={{ ...s.cardSub, marginTop: 6 }}>
-            {bo.label}
-            {item.next_due && <span> · {item.next_due}</span>}
-          </div>
+          {item.screens_for && <div style={s.rowSub}>Screens for {item.screens_for}</div>}
+          {bo.label && <div style={s.rowSub}>{bo.label}</div>}
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ ...s.price, color: isFree ? '#15803d' : '#0f172a' }}>{costText}</div>
+        <div style={{ textAlign: 'right', flexShrink: 0, maxWidth: '45%' }}>
+          <div className="num" style={{ ...s.price, color: isFree ? 'var(--free)' : 'var(--text)' }}>{costText}</div>
           {hasEvidence && (
-            <button onClick={() => setOpen(o => !o)} style={{ ...s.linkBtn, marginTop: 2, padding: 0 }}>
+            <button onClick={() => setOpen(o => !o)} className="btn btn-text" style={{ marginTop: 4 }}>
               {open ? 'Hide source' : 'Why this price?'}
             </button>
           )}
@@ -218,8 +244,8 @@ function CheckupItemCard({ item }) {
         <div style={s.evidence}>
           {bo.breakdown?.length > 0 ? bo.breakdown.map((b, i) => (
             <div key={i} style={{ marginTop: i ? 8 : 0 }}>
-              <strong>{SERVICE_LABELS[b.service_id] || b.service_id}</strong>
-              <span style={{ color: '#4f46e5', fontWeight: 600, marginLeft: 8 }}>{b.cost_text}</span>
+              <span style={{ fontWeight: 500 }}>{SERVICE_LABELS[b.service_id] || b.service_id}</span>
+              <span className="num" style={{ marginLeft: 8 }}>{b.cost_text}</span>
               {b.evidence?.quote && (
                 <div style={s.quote}>
                   {b.evidence.page != null && `Page ${b.evidence.page}: `}“{b.evidence.quote}”
@@ -227,7 +253,7 @@ function CheckupItemCard({ item }) {
               )}
             </div>
           )) : bo.evidence?.map((ev, i) => (
-            <div key={i} style={{ ...s.quote, marginTop: i ? 6 : 0 }}>
+            <div key={i} style={{ ...s.quote, marginTop: i ? 8 : 0 }}>
               {ev.page != null && `Page ${ev.page}: `}“{ev.quote}”
             </div>
           ))}
@@ -235,11 +261,10 @@ function CheckupItemCard({ item }) {
       )}
 
       <div style={s.actions}>
+        <ProviderSearch itemId={item.item_id} label={item.label} />
         <CalendarButton item={item} costText={costText} />
-        {!isFree && <PriceEstimate label={item.label} services={(bo.breakdown || []).map(b => b.service_id)} />}
+        {!isFree && <PriceEstimate insurer={insurer} label={item.label} services={(bo.breakdown || []).map(b => b.service_id)} />}
       </div>
-
-      <ProviderSearch itemId={item.item_id} label={item.label} />
     </div>
   )
 }
@@ -281,19 +306,20 @@ function CalendarButton({ item, costText }) {
     details,
   })
   return (
-    <a
-      href={`https://calendar.google.com/calendar/render?${params}`}
-      target="_blank"
-      rel="noreferrer"
-      style={s.calendarBtn}
-    >
-      📅 Put it on calendar
+    <a href={`https://calendar.google.com/calendar/render?${params}`} target="_blank" rel="noreferrer" className="btn btn-outline">
+      <CalendarPlus {...ICON} /> Add to calendar
     </a>
   )
 }
 
+const NETWORK_TAG = {
+  yes: { icon: CircleCheck, text: 'Likely in network', variant: 'green' },
+  no: { icon: CircleX, text: 'Not in network', variant: 'red' },
+  unknown: { icon: CircleHelp, text: 'Network unknown' },
+}
+
 // Optional: asks the backend to search the web for typical private prices in Portugal.
-function PriceEstimate({ label, services }) {
+function PriceEstimate({ label, services, insurer }) {
   const [state, setState] = useState('idle') // idle | loading | done | error
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
@@ -304,7 +330,7 @@ function PriceEstimate({ label, services }) {
       const res = await fetch(`${API_BASE}/api/price-estimate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ label, services }),
+        body: JSON.stringify({ label, services, insurer }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.detail || `HTTP ${res.status}`)
@@ -318,75 +344,112 @@ function PriceEstimate({ label, services }) {
 
   if (state === 'idle') {
     return (
-      <button onClick={fetchEstimate} style={s.estimateBtn}>
-        ✨ Get price estimate
+      <button onClick={fetchEstimate} className="btn btn-outline">
+        <Sparkles {...ICON} /> Get price estimate
       </button>
     )
   }
   if (state === 'loading') {
     return (
-      <div style={{ ...s.estimateBox, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={s.miniSpinner} />
-        <span style={{ color: '#475569' }}>Searching prices across Portuguese clinics…</span>
+      <div style={s.panel}>
+        <div className="muted" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
+          <LoaderCircle {...ICON} className="spinner" /> Searching prices{insurer ? ` and ${insurer} network` : ''}…
+        </div>
+        <div className="skeleton" style={{ height: 20, width: 160, marginTop: 16 }} />
+        <div className="skeleton" style={{ height: 12, width: '80%', marginTop: 8 }} />
+        {[0, 1, 2].map(i => <div key={i} className="skeleton" style={{ height: 40, marginTop: 8 }} />)}
       </div>
     )
   }
   if (state === 'error') {
     return (
-      <div style={{ ...s.estimateBox, background: '#fef2f2', color: '#991b1b' }}>
-        {error} <button onClick={fetchEstimate} style={{ ...s.linkBtn, padding: 0, marginLeft: 6 }}>Retry</button>
+      <div style={{ ...s.panel, ...s.errorInline }}>
+        <CircleAlert {...ICON} style={{ flexShrink: 0 }} />
+        <span style={{ flex: 1 }}>Couldn't get an estimate. {error}</span>
+        <button onClick={fetchEstimate} className="btn btn-outline"><RefreshCw {...ICON} /> Retry</button>
       </div>
     )
   }
   return (
-    <div style={s.estimateBox}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-        <span style={s.estimateLabel}>Estimated private price</span>
-        <span style={s.estimateRange}>€{data.min_eur} – €{data.max_eur}</span>
-        {data.typical_eur != null && <span style={{ color: '#64748b' }}>typically ~€{data.typical_eur}</span>}
+    <div style={s.panel}>
+      <div style={s.statLabel}>Estimated private price</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+        <span className="num" style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.02em' }}>€{data.min_eur} – €{data.max_eur}</span>
+        {data.typical_eur != null && <span className="muted num" style={{ fontSize: 14 }}>typically €{data.typical_eur}</span>}
       </div>
-      {data.summary && <div style={{ color: '#475569', marginTop: 4 }}>{data.summary}</div>}
+      {data.summary && <div className="muted" style={{ marginTop: 4, fontSize: 14 }}>{data.summary}</div>}
+
+      {data.clinics?.length > 0 && (
+        <>
+          <div style={{ ...s.statLabel, marginTop: 16 }}>
+            Clinics{insurer ? ` · checked against ${insurer} network` : ''}
+          </div>
+          <div style={s.clinicList}>
+            {data.clinics.map(c => {
+              const net = NETWORK_TAG[c.in_network] || NETWORK_TAG.unknown
+              const tag = <Tag icon={net.icon} variant={net.variant}>{net.text}</Tag>
+              return (
+                <div key={c.name} style={s.clinicRow}>
+                  <span style={{ flex: 1, minWidth: 0, fontWeight: 500 }}>{c.name}</span>
+                  {c.network_source_url
+                    ? <a href={c.network_source_url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>{tag}</a>
+                    : tag}
+                  <span className="num" style={{ width: 48, textAlign: 'right', fontWeight: 500 }}>
+                    {c.price_eur != null ? `€${c.price_eur}` : '—'}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+
       {data.sources?.length > 0 && (
-        <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: 8, fontSize: 13 }}>
+          <span className="muted">Sources:</span>
           {data.sources.map(src => (
-            <a key={src.url} href={src.url} target="_blank" rel="noreferrer" style={s.sourceChip}>
+            <a key={src.url} href={src.url} target="_blank" rel="noreferrer">
               {src.title.length > 40 ? `${src.title.slice(0, 40)}…` : src.title}
             </a>
           ))}
         </div>
       )}
-      <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 6 }}>AI estimate from web search, may vary by clinic. Your network discount may lower this.</div>
+      <div className="muted" style={{ fontSize: 12, marginTop: 8 }}>
+        AI estimate from web search. Prices vary by clinic; your network discount may lower them.
+      </div>
     </div>
   )
 }
 
-function CheckupGroup({ title, hint, items, color, defaultCollapsed = false }) {
+function CheckupGroup({ title, hint, items, insurer, defaultCollapsed = false }) {
   const [open, setOpen] = useState(!defaultCollapsed)
   if (!items?.length) return null
+  const Chevron = open ? ChevronUp : ChevronDown
   return (
-    <div style={{ marginTop: 24 }}>
+    <div style={{ marginTop: 32 }}>
       <button onClick={() => setOpen(o => !o)} style={s.groupHead}>
-        <span style={{ ...s.dot, background: color }} />
-        <span style={{ fontWeight: 700, color: '#0f172a' }}>{title}</span>
-        <span style={s.count}>{items.length}</span>
-        {hint && <span style={{ ...s.muted, marginLeft: 4 }}>{hint}</span>}
-        <span style={{ marginLeft: 'auto', color: '#94a3b8', fontSize: '0.8rem' }}>{open ? 'Hide' : 'Show'}</span>
+        <h3 style={{ fontSize: 16 }}>{title}</h3>
+        <span className="tab-count">{items.length}</span>
+        {hint && <span className="muted" style={{ fontSize: 14 }}>· {hint}</span>}
+        <Chevron {...ICON} style={{ marginLeft: 'auto', color: 'var(--muted)' }} />
       </button>
       {open && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 }}>
-          {items.map((item, i) => <CheckupItemCard key={item.item_id || i} item={item} />)}
+        <div className="card" style={{ marginTop: 8 }}>
+          {items.map((item, i) => <CheckupItemCard key={item.item_id || i} item={item} insurer={insurer} />)}
         </div>
       )}
     </div>
   )
 }
 
-function CheckupPlan({ checkup_plan, used_demo }) {
+function CheckupPlan({ checkup_plan, used_demo, insurer }) {
   if (!checkup_plan) return null
   const { recommended = [], included_in_insurance = [], coming_up = [],
     fallback_message, product_used, product_inferred } = checkup_plan
 
-  if (!recommended.length && !included_in_insurance.length && !coming_up.length && !fallback_message) return null
+  if (!recommended.length && !included_in_insurance.length && !coming_up.length && !fallback_message) {
+    return <EmptyState title="No screenings to recommend right now">Nothing in the screening guidelines matches your age and sex yet.</EmptyState>
+  }
 
   const official = recommended.filter(r => r.strength === 'official')
   const guideline = recommended.filter(r => r.strength === 'guideline')
@@ -400,42 +463,96 @@ function CheckupPlan({ checkup_plan, used_demo }) {
 
   return (
     <section style={s.section}>
-      <h2 style={s.h2}>Your preventive health plan</h2>
-      <p style={s.muted}>Screenings recommended for you, and what each one costs with your policy</p>
+      <p className="muted" style={{ margin: 0 }}>Screenings recommended for you, and what each one costs with your policy.</p>
 
       {(used_demo || (product_inferred && product_used) || fallback_message) && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
-          {used_demo && <div style={s.notice}>Showing a sample policy — we couldn't read this document, so prices may not match yours.</div>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
+          {used_demo && <Notice>Showing a sample policy. We couldn't read this document, so prices may not match yours.</Notice>}
           {product_inferred && product_used && (
-            <div style={s.notice}>Looks like <strong>{product_used}</strong>. If your product differs, check-up contents may vary.</div>
+            <Notice>Looks like <strong style={{ fontWeight: 500 }}>{product_used}</strong>. If your product differs, check-up contents may vary.</Notice>
           )}
-          {fallback_message && <div style={{ ...s.notice, ...s.noticeWarn }}>{fallback_message}</div>}
+          {fallback_message && <Notice>{fallback_message}</Notice>}
         </div>
       )}
 
-      <CheckupGroup title="Official recommendations" hint="National screening programme" items={official} color="#16a34a" />
-      <CheckupGroup title="Guideline recommendations" hint="Clinical guidelines" items={guideline} color="#4f46e5" />
-      <CheckupGroup title="General recommendations" items={general} color="#94a3b8" />
-      <CheckupGroup title="Included in your check-up" items={includedAsCards} color="#0ea5e9" defaultCollapsed />
+      <CheckupGroup insurer={insurer} title="Official recommendations" hint="National screening programme" items={official} />
+      <CheckupGroup insurer={insurer} title="Guideline recommendations" hint="Clinical guidelines" items={guideline} />
+      <CheckupGroup insurer={insurer} title="General recommendations" items={general} />
+      <CheckupGroup insurer={insurer} title="Included in your check-up" items={includedAsCards} defaultCollapsed />
 
       {!!coming_up.length && (
-        <div style={{ marginTop: 24 }}>
-          <div style={{ ...s.groupHead, cursor: 'default' }}>
-            <span style={{ ...s.dot, background: '#cbd5e1' }} />
-            <span style={{ fontWeight: 700, color: '#0f172a' }}>Coming up</span>
-            <span style={s.count}>{coming_up.length}</span>
+        <div style={{ marginTop: 32 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h3 style={{ fontSize: 16 }}>Coming up</h3>
+            <span className="tab-count">{coming_up.length}</span>
           </div>
-          <div style={s.chips}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
             {coming_up.map((item, i) => (
-              <div key={item.item_id || i} style={s.chip}>
-                <span style={{ fontWeight: 600, color: '#334155' }}>{item.label}</span>
-                {item.age_min && <span style={{ color: '#94a3b8' }}> · from age {item.age_min}</span>}
-              </div>
+              <Tag key={item.item_id || i}>
+                <span style={{ color: 'var(--text)' }}>{item.label}</span>
+                {item.age_min && <span> · from age {item.age_min}</span>}
+              </Tag>
             ))}
           </div>
         </div>
       )}
     </section>
+  )
+}
+
+// ─── Loading / error screens ─────────────────────────────────────────────────
+
+function AnalyzingScreen({ stepIdx, fileName }) {
+  return (
+    <div>
+      <div className="card" style={{ ...s.profile, gap: 16 }}>
+        <div style={s.fileIcon}><FileText size={20} strokeWidth={1.5} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 500 }}>Analyzing {fileName || 'your policy'}</div>
+          <div className="muted" style={{ fontSize: 14 }}>Usually takes 20–60 seconds</div>
+        </div>
+        <LoaderCircle size={20} strokeWidth={1.5} className="spinner" style={{ color: 'var(--accent)' }} />
+      </div>
+
+      <ol style={s.steps}>
+        {ANALYSIS_STEPS.map((step, i) => {
+          const done = i < stepIdx
+          const current = i === stepIdx
+          return (
+            <li key={step} style={{ ...s.step, color: done || current ? 'var(--text)' : 'var(--muted)', fontWeight: current ? 500 : 400 }}>
+              <span style={{ ...s.stepDot, ...(done ? s.stepDone : current ? s.stepCurrent : {}) }}>
+                {done ? <Check size={12} strokeWidth={2} /> : current ? <LoaderCircle size={12} strokeWidth={2} className="spinner" /> : null}
+              </span>
+              {step}
+            </li>
+          )
+        })}
+      </ol>
+
+      {/* Skeleton of the results page */}
+      <div className="tabs" style={{ pointerEvents: 'none' }}>
+        <div className="tab" aria-selected="true">Coverage</div>
+        <div className="tab">Preventive health plan</div>
+      </div>
+      <div style={{ ...s.statGrid, marginTop: 24 }}>
+        {[0, 1, 2, 3].map(i => (
+          <div key={i} className="card" style={s.stat}>
+            <div className="skeleton" style={{ height: 12, width: '50%' }} />
+            <div className="skeleton" style={{ height: 24, width: '40%', marginTop: 8 }} />
+          </div>
+        ))}
+      </div>
+      <div className="card" style={{ marginTop: 16, padding: 16 }}>
+        {[0, 1, 2, 3, 4].map(i => (
+          <div key={i} style={{ display: 'flex', gap: 16, padding: '8px 0' }}>
+            <div className="skeleton" style={{ height: 16, flex: 2 }} />
+            <div className="skeleton" style={{ height: 16, flex: 1 }} />
+            <div className="skeleton" style={{ height: 16, flex: 1 }} />
+            <div className="skeleton" style={{ height: 16, flex: 1 }} />
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -446,6 +563,7 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
   const [stepIdx, setStepIdx] = useState(0)
   const [result, setResult] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
+  const [fieldError, setFieldError] = useState('')
   const [form, setForm] = useState({ name: '', age: '', gender: '' })
   const [file, setFile] = useState(null)
   const [dragOver, setDragOver] = useState(false)
@@ -455,6 +573,12 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
 
   function handleField(e) {
     setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+    setFieldError('')
+  }
+
+  function pickFile(f) {
+    setFile(f || null)
+    setFieldError('')
   }
 
   function startStepCycle() {
@@ -470,14 +594,8 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
     if (stepTimer.current) clearInterval(stepTimer.current)
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    if (!form.name.trim()) { setErrorMsg('Name is required.'); setPhase('error'); return }
-    if (!form.gender) { setErrorMsg('Gender is required.'); setPhase('error'); return }
+  async function submit() {
     const age = parseInt(form.age, 10)
-    if (!age || age < 1 || age > 120) { setErrorMsg('Enter a valid age (1–120).'); setPhase('error'); return }
-    if (!file) { setErrorMsg('Please select a file.'); setPhase('error'); return }
-
     setPhase('analyzing')
     startStepCycle()
 
@@ -493,19 +611,31 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
       if (!res.ok) throw new Error(json.detail || `HTTP ${res.status}`)
       stopStepCycle()
       setResult(json)
+      setTab('coverage')
       setPhase('result')
       onUploadSuccess?.()
     } catch (err) {
       stopStepCycle()
-      setErrorMsg(err.message)
+      setErrorMsg(err.message === 'Failed to fetch' ? "We couldn't reach the server. Check your connection and try again." : err.message)
       setPhase('error')
     }
+  }
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    const age = parseInt(form.age, 10)
+    if (!form.name.trim()) return setFieldError('Enter your full name.')
+    if (!age || age < 1 || age > 120) return setFieldError('Enter a valid age (1–120).')
+    if (!form.gender) return setFieldError('Select a gender.')
+    if (!file) return setFieldError('Add your policy PDF.')
+    submit()
   }
 
   function reset() {
     setPhase('idle')
     setResult(null)
     setErrorMsg('')
+    setFieldError('')
     setForm({ name: '', age: '', gender: '' })
     setFile(null)
     setTab('coverage')
@@ -513,44 +643,21 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
   }
 
   if (phase === 'analyzing') {
-    return (
-      <div style={{ ...s.panel, textAlign: 'center', padding: '48px 24px' }}>
-        <div style={s.spinner} />
-        <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f172a', marginBottom: 24 }}>
-          Analyzing your policy…
-        </div>
-        <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 12, textAlign: 'left' }}>
-          {ANALYSIS_STEPS.map((step, i) => (
-            <div key={step} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{
-                width: 22, height: 22, borderRadius: '50%', display: 'inline-flex',
-                alignItems: 'center', justifyContent: 'center', fontSize: '0.72rem', fontWeight: 700,
-                background: i <= stepIdx ? '#4f46e5' : '#e2e8f0',
-                color: i <= stepIdx ? '#fff' : '#94a3b8',
-                transition: 'background 0.4s',
-              }}>
-                {i < stepIdx ? '✓' : i + 1}
-              </span>
-              <span style={{
-                fontSize: '0.92rem',
-                color: i === stepIdx ? '#0f172a' : i < stepIdx ? '#64748b' : '#94a3b8',
-                fontWeight: i === stepIdx ? 600 : 400,
-              }}>
-                {step}
-              </span>
-            </div>
-          ))}
-        </div>
-        <p style={{ ...s.muted, marginTop: 28 }}>Usually takes 20–60 seconds.</p>
-      </div>
-    )
+    return <div style={s.resultsWrap}><AnalyzingScreen stepIdx={stepIdx} fileName={file?.name} /></div>
   }
 
   if (phase === 'error') {
     return (
-      <div style={s.panel}>
-        <div style={s.errorBox}>{errorMsg}</div>
-        <button onClick={reset} style={s.btn}>Try again</button>
+      <div style={s.formWrap}>
+        <div className="card" style={{ padding: 32, textAlign: 'center' }}>
+          <div style={s.errorIcon}><CircleAlert size={20} strokeWidth={1.5} /></div>
+          <h2 style={{ fontSize: 20, marginTop: 16 }}>We couldn't analyze this policy</h2>
+          <p className="muted" style={{ margin: '8px auto 0', maxWidth: 440 }}>{errorMsg}</p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
+            <button onClick={submit} className="btn btn-primary"><RefreshCw {...ICON} /> Try again</button>
+            <button onClick={() => setPhase('idle')} className="btn btn-outline btn-lg" style={{ height: 48 }}>Edit details</button>
+          </div>
+        </div>
       </div>
     )
   }
@@ -567,29 +674,23 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
       { id: 'plan', label: 'Preventive health plan', count: planCount },
     ]
     return (
-      <div>
-        <div style={s.profile}>
+      <div style={s.resultsWrap}>
+        <div className="card" style={s.profile}>
           <div style={s.avatar}>{initials}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: '1.05rem', color: '#0f172a' }}>{record.name}</div>
-            <div style={s.muted}>
+            <div style={{ fontWeight: 600, fontSize: 16, letterSpacing: '-0.01em' }}>{record.name}</div>
+            <div className="muted" style={{ fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {record.age} years · {record.gender.charAt(0).toUpperCase() + record.gender.slice(1)} · {record.filename}
             </div>
           </div>
-          <button onClick={reset} style={s.ghostBtn}>New analysis</button>
+          <button onClick={reset} className="btn btn-outline btn-lg">New analysis</button>
         </div>
 
-        <div style={s.tabs} role="tablist">
+        <div className="tabs" role="tablist">
           {tabs.map(t => (
-            <button
-              key={t.id}
-              role="tab"
-              aria-selected={tab === t.id}
-              onClick={() => setTab(t.id)}
-              style={{ ...s.tab, ...(tab === t.id ? s.tabActive : {}) }}
-            >
+            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className="tab">
               {t.label}
-              {t.count != null && <span style={{ ...s.tabCount, ...(tab === t.id ? s.tabCountActive : {}) }}>{t.count}</span>}
+              {t.count != null && <span className="tab-count">{t.count}</span>}
             </button>
           ))}
         </div>
@@ -599,14 +700,15 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
           <CoverageSection coverage={coverage} />
         </div>
         <div style={{ display: tab === 'plan' ? 'block' : 'none' }}>
-          {!checkup_plan && (
-            <div style={{ ...s.notice, marginTop: 20 }}>
+          {!checkup_plan ? (
+            <EmptyState title="No health plan for this document">
               {record.filename.toLowerCase().endsWith('.pdf')
                 ? 'We could not build a plan from this document.'
                 : 'The preventive health plan is only available for PDF files.'}
-            </div>
+            </EmptyState>
+          ) : (
+            <CheckupPlan checkup_plan={checkup_plan} used_demo={used_demo} insurer={used_demo ? '' : (coverage?.insurer || '')} />
           )}
-          <CheckupPlan checkup_plan={checkup_plan} used_demo={used_demo} />
         </div>
       </div>
     )
@@ -614,182 +716,151 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
 
   // idle — show the form
   return (
-    <form onSubmit={handleSubmit} style={{ ...s.panel, display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <div style={s.field}>
-        <label style={s.label}>Full name</label>
-        <input name="name" value={form.name} onChange={handleField} placeholder="Maria Silva" style={s.input} />
-      </div>
+    <div style={s.formWrap}>
+      <header style={{ marginBottom: 32 }}>
+        <h1 style={{ fontSize: 32, lineHeight: 1.2 }}>Understand your health insurance</h1>
+        <p className="muted" style={{ margin: '8px 0 0', fontSize: 16 }}>
+          Upload your policy to see what's covered, what you can use today, and which check-ups you can get for free.
+        </p>
+      </header>
 
-      <div style={s.row2}>
-        <div style={s.field}>
-          <label style={s.label}>Age</label>
-          <input name="age" type="number" value={form.age} onChange={handleField} placeholder="35" min={1} max={120} style={s.input} />
+      <form onSubmit={handleSubmit} noValidate className="card" style={{ padding: 32, display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={s.fieldWrap}>
+          <label htmlFor="name" style={s.label}>Full name</label>
+          <input id="name" name="name" value={form.name} onChange={handleField} placeholder="Maria Silva" className="field" autoComplete="name" />
         </div>
-        <div style={s.field}>
-          <label style={s.label}>Gender</label>
-          <select name="gender" value={form.gender} onChange={handleField} style={s.input}>
-            <option value="">Select</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-      </div>
 
-      <div style={s.field}>
-        <label style={s.label}>Insurance policy</label>
-        <div
-          onClick={() => fileRef.current?.click()}
-          onDragOver={e => { e.preventDefault(); setDragOver(true) }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={e => { e.preventDefault(); setDragOver(false); setFile(e.dataTransfer.files?.[0] || null) }}
-          style={{ ...s.drop, ...(dragOver || file ? s.dropActive : {}) }}
-        >
-          <div style={{ fontSize: '1.6rem', marginBottom: 6 }}>{file ? '📄' : '⬆️'}</div>
-          {file ? (
-            <>
-              <div style={{ fontWeight: 600, color: '#0f172a' }}>{file.name}</div>
-              <div style={s.muted}>{(file.size / 1024).toFixed(0)} KB · click to change</div>
-            </>
-          ) : (
-            <>
-              <div style={{ fontWeight: 600, color: '#0f172a' }}>Drop your policy PDF here</div>
-              <div style={s.muted}>or click to browse · up to 15 MB</div>
-            </>
-          )}
+        <div style={s.row2}>
+          <div style={s.fieldWrap}>
+            <label htmlFor="age" style={s.label}>Age</label>
+            <input id="age" name="age" type="number" inputMode="numeric" value={form.age} onChange={handleField} placeholder="35" min={1} max={120} className="field" />
+          </div>
+          <div style={s.fieldWrap}>
+            <label htmlFor="gender" style={s.label}>Gender</label>
+            <select id="gender" name="gender" value={form.gender} onChange={handleField} className="field" style={{ color: form.gender ? 'var(--text)' : '#a0a0aa' }}>
+              <option value="">Select</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
         </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept=".pdf,.doc,.docx"
-          onChange={e => setFile(e.target.files?.[0] || null)}
-          style={{ display: 'none' }}
-        />
-      </div>
 
-      <button type="submit" style={s.btn}>Analyze my policy</button>
-    </form>
+        <div style={s.fieldWrap}>
+          <span style={s.label}>Insurance policy</span>
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => fileRef.current?.click()}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current?.click() } }}
+            onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={e => { e.preventDefault(); setDragOver(false); pickFile(e.dataTransfer.files?.[0]) }}
+            className={`dropzone${dragOver ? ' is-active' : ''}`}
+          >
+            <div className="dropzone-icon">
+              {file ? <FileText size={20} strokeWidth={1.5} /> : <Upload size={20} strokeWidth={1.5} />}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {file ? (
+                <>
+                  <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</div>
+                  <div className="muted num" style={{ fontSize: 14 }}>{(file.size / 1024).toFixed(0)} KB</div>
+                </>
+              ) : (
+                <>
+                  <div style={{ fontWeight: 500 }}>Upload your policy PDF</div>
+                  <div className="muted" style={{ fontSize: 14 }}>Drag and drop, or click to browse · up to 15 MB</div>
+                </>
+              )}
+            </div>
+            {file && <span className="btn-text btn">Change</span>}
+          </div>
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.doc,.docx"
+            onChange={e => pickFile(e.target.files?.[0])}
+            style={{ display: 'none' }}
+          />
+        </div>
+
+        {fieldError && (
+          <div role="alert" style={s.errorInline}>
+            <CircleAlert {...ICON} style={{ flexShrink: 0 }} /> {fieldError}
+          </div>
+        )}
+
+        <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Analyze my policy</button>
+      </form>
+    </div>
   )
 }
 
 const s = {
-  panel: { background: '#fff', borderRadius: 16, padding: '28px 28px', boxShadow: '0 1px 3px rgba(15,23,42,0.06), 0 8px 24px rgba(15,23,42,0.06)' },
-  section: { background: '#fff', borderRadius: 16, padding: '24px 24px', marginTop: 20, boxShadow: '0 1px 3px rgba(15,23,42,0.06), 0 8px 24px rgba(15,23,42,0.06)' },
-  h2: { margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#0f172a' },
-  muted: { margin: '4px 0 0', fontSize: '0.85rem', color: '#64748b' },
+  formWrap: { maxWidth: 720, margin: '0 auto' },
+  resultsWrap: { maxWidth: 960, margin: '0 auto' },
+  section: { paddingTop: 24 },
 
-  field: { display: 'flex', flexDirection: 'column', gap: 6 },
-  row2: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16 },
-  label: { fontSize: '0.85rem', fontWeight: 600, color: '#334155' },
-  input: {
-    padding: '11px 14px', fontSize: '0.95rem', border: '1.5px solid #e2e8f0', borderRadius: 10,
-    outline: 'none', background: '#f8fafc', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
-  },
-  drop: {
-    border: '2px dashed #cbd5e1', borderRadius: 12, padding: '28px 16px', textAlign: 'center',
-    cursor: 'pointer', background: '#f8fafc', transition: 'all 0.15s',
-  },
-  dropActive: { borderColor: '#4f46e5', background: '#eef2ff' },
-  btn: {
-    padding: '14px 0', fontSize: '1rem', fontWeight: 600, background: '#4f46e5', color: '#fff',
-    border: 'none', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', width: '100%',
-  },
-  ghostBtn: {
-    padding: '8px 16px', fontSize: '0.85rem', background: '#fff', border: '1.5px solid #e2e8f0',
-    borderRadius: 999, cursor: 'pointer', color: '#4f46e5', fontWeight: 600, fontFamily: 'inherit',
-  },
-  linkBtn: {
-    background: 'none', border: 'none', cursor: 'pointer', color: '#4f46e5', fontSize: '0.82rem',
-    fontWeight: 600, padding: '12px 0 0', fontFamily: 'inherit',
-  },
+  fieldWrap: { display: 'flex', flexDirection: 'column', gap: 8 },
+  row2: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16 },
+  label: { fontSize: 14, fontWeight: 500 },
 
-  profile: {
-    display: 'flex', alignItems: 'center', gap: 14, background: '#fff', borderRadius: 16, padding: '16px 20px',
-    boxShadow: '0 1px 3px rgba(15,23,42,0.06), 0 8px 24px rgba(15,23,42,0.06)', flexWrap: 'wrap',
-  },
+  profile: { display: 'flex', alignItems: 'center', gap: 16, padding: 16, flexWrap: 'wrap' },
   avatar: {
-    width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#4f46e5,#0ea5e9)',
-    color: '#fff', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    width: 40, height: 40, borderRadius: '50%', background: 'var(--subtle)', color: 'var(--text)',
+    fontWeight: 500, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  fileIcon: {
+    width: 40, height: 40, borderRadius: 10, background: 'var(--subtle)', color: 'var(--muted)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
 
-
-  statGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, margin: '20px 0' },
-  stat: { background: '#f8fafc', borderRadius: 12, padding: '14px 16px', border: '1px solid #f1f5f9' },
-  statLabel: { fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
-  statValue: { fontSize: '1.35rem', fontWeight: 700, marginTop: 4, overflowWrap: 'anywhere' },
-  statSub: { fontSize: '0.78rem', color: '#94a3b8', marginTop: 2 },
-
-  tableWrap: { overflowX: 'auto', border: '1px solid #e2e8f0', borderRadius: 12 },
-  table: { width: '100%', borderCollapse: 'collapse', fontSize: '0.87rem' },
-  th: {
-    padding: '11px 14px', background: '#f8fafc', textAlign: 'left', fontWeight: 600, color: '#64748b',
-    borderBottom: '1px solid #e2e8f0', whiteSpace: 'nowrap', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.04em',
-  },
-  td: { padding: '11px 14px', borderBottom: '1px solid #f1f5f9', color: '#334155', verticalAlign: 'top' },
-  cellSub: { fontSize: '0.74rem', color: '#94a3b8', marginTop: 4, whiteSpace: 'nowrap' },
+  statGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(176px, 1fr))', gap: 16, marginBottom: 16 },
+  stat: { padding: 16 },
+  statLabel: { fontSize: 13, color: 'var(--muted)' },
+  statValue: { fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', marginTop: 4, overflowWrap: 'anywhere' },
+  statSub: { fontSize: 13, color: 'var(--muted)', marginTop: 4 },
+  cellSub: { fontSize: 12, color: 'var(--muted)', marginTop: 4, whiteSpace: 'nowrap' },
 
   groupHead: {
     display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none',
-    borderBottom: '1px solid #e2e8f0', padding: '0 0 10px', cursor: 'pointer', fontSize: '0.98rem',
-    fontFamily: 'inherit', textAlign: 'left', flexWrap: 'wrap',
+    padding: '8px 0', cursor: 'pointer', font: 'inherit', textAlign: 'left', color: 'var(--text)', flexWrap: 'wrap',
   },
-  dot: { width: 10, height: 10, borderRadius: '50%', flexShrink: 0 },
-  count: { background: '#f1f5f9', color: '#475569', borderRadius: 999, padding: '1px 8px', fontSize: '0.75rem', fontWeight: 600 },
+  rowTitle: { fontWeight: 500, fontSize: 15 },
+  rowSub: { fontSize: 14, color: 'var(--muted)', marginTop: 4 },
+  price: { fontWeight: 600, fontSize: 15 },
+  actions: { display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start', marginTop: 16 },
+  evidence: { marginTop: 16, background: 'var(--subtle)', borderRadius: 8, padding: '8px 16px', fontSize: 14 },
+  quote: { color: 'var(--muted)', fontStyle: 'italic', marginTop: 4 },
 
-  card: { padding: '16px 18px', border: '1px solid #e2e8f0', borderRadius: 12, background: '#fff' },
-  cardTitle: { fontWeight: 600, fontSize: '0.95rem', color: '#0f172a' },
-  cardSub: { fontSize: '0.82rem', color: '#64748b', marginTop: 3 },
-  price: { fontWeight: 700, fontSize: '1.05rem' },
-  evidence: { marginTop: 12, background: '#f8fafc', borderRadius: 8, padding: '10px 14px', fontSize: '0.82rem', color: '#334155' },
-  quote: { color: '#64748b', fontStyle: 'italic', marginTop: 2 },
+  panel: { width: '100%', padding: 16, borderRadius: 10, border: '1px solid var(--border)', background: '#fbfbfc', fontSize: 14 },
+  clinicList: { marginTop: 8, display: 'flex', flexDirection: 'column', border: '1px solid var(--border)', borderRadius: 8, background: 'var(--surface)' },
+  clinicRow: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', flexWrap: 'wrap', borderTop: '1px solid var(--border)', marginTop: -1 },
 
-  tabs: {
-    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 20, padding: 6,
-    background: '#e2e8f0', borderRadius: 16, width: '100%',
+  notice: {
+    display: 'flex', gap: 8, padding: '12px 16px', background: 'var(--subtle)', color: 'var(--text)',
+    border: '1px solid var(--border)', borderRadius: 10, fontSize: 14,
   },
-  tab: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '16px 12px',
-    border: 'none', borderRadius: 12, background: 'transparent', color: '#475569', fontWeight: 700,
-    fontSize: '1.05rem', fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.15s', minWidth: 0,
-    textAlign: 'center',
+  empty: {
+    marginTop: 24, padding: '40px 24px', textAlign: 'center', border: '1px dashed var(--border-strong)',
+    borderRadius: 'var(--radius)', background: 'var(--surface)',
   },
-  tabActive: { background: '#fff', color: '#0f172a', boxShadow: '0 1px 3px rgba(15,23,42,0.12)' },
-  tabCount: { background: '#cbd5e1', color: '#475569', borderRadius: 999, padding: '1px 8px', fontSize: '0.74rem' },
-  tabCountActive: { background: '#e0e7ff', color: '#4338ca' },
-
-  actions: { display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start', marginTop: 12 },
-  calendarBtn: {
-    padding: '7px 14px', fontSize: '0.82rem', fontWeight: 600, fontFamily: 'inherit',
-    background: '#fff', color: '#0f172a', border: '1px solid #e2e8f0', borderRadius: 999,
-    cursor: 'pointer', textDecoration: 'none', display: 'inline-block',
+  errorInline: {
+    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 10, fontSize: 14,
+    color: 'var(--danger)', background: 'var(--danger-bg)', border: '1px solid #fecdca',
   },
-  estimateBtn: {
-    padding: '7px 14px', fontSize: '0.82rem', fontWeight: 600, fontFamily: 'inherit',
-    background: '#eef2ff', color: '#4338ca', border: '1px solid #c7d2fe', borderRadius: 999, cursor: 'pointer',
-  },
-  estimateBox: {
-    width: '100%', padding: '12px 14px', borderRadius: 10, fontSize: '0.84rem',
-    background: 'linear-gradient(135deg,#eef2ff,#f0f9ff)', border: '1px solid #e0e7ff',
-  },
-  estimateLabel: { fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
-  estimateRange: { fontSize: '1.15rem', fontWeight: 800, color: '#312e81' },
-  sourceChip: {
-    fontSize: '0.72rem', color: '#4338ca', background: '#fff', border: '1px solid #e0e7ff',
-    borderRadius: 999, padding: '2px 8px', textDecoration: 'none',
-  },
-  miniSpinner: {
-    width: 14, height: 14, borderRadius: '50%', border: '2px solid #c7d2fe', borderTopColor: '#4f46e5',
-    animation: 'spin 0.8s linear infinite', display: 'inline-block', flexShrink: 0,
+  errorIcon: {
+    width: 40, height: 40, margin: '0 auto', borderRadius: '50%', background: 'var(--danger-bg)', color: 'var(--danger)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
   },
 
-  chips: { display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  chip: { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 999, padding: '6px 12px', fontSize: '0.82rem' },
-
-  notice: { padding: '10px 14px', background: '#eef2ff', color: '#3730a3', borderRadius: 10, fontSize: '0.86rem', lineHeight: 1.5 },
-  noticeWarn: { background: '#fffbeb', color: '#92400e' },
-  errorBox: { padding: '12px 16px', background: '#fef2f2', color: '#991b1b', borderRadius: 10, fontSize: '0.9rem', marginBottom: 14 },
-  spinner: {
-    width: 40, height: 40, borderRadius: '50%', border: '3px solid #e2e8f0', borderTopColor: '#4f46e5',
-    animation: 'spin 0.8s linear infinite', margin: '0 auto 20px',
+  steps: { listStyle: 'none', padding: 0, margin: '24px 0 0', display: 'flex', gap: 24, flexWrap: 'wrap', fontSize: 14 },
+  step: { display: 'flex', alignItems: 'center', gap: 8 },
+  stepDot: {
+    width: 20, height: 20, borderRadius: '50%', border: '1px solid var(--border-strong)', background: 'var(--surface)',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
+  stepDone: { background: 'var(--text)', borderColor: 'var(--text)', color: '#fff' },
+  stepCurrent: { borderColor: 'var(--accent)', color: 'var(--accent)' },
 }

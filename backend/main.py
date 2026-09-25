@@ -85,12 +85,13 @@ async def get_providers(service_type: str, lat: float, lng: float):
 class PriceEstimateRequest(BaseModel):
     label: str
     services: list[str] = []
+    insurer: str = ""
 
 
 @app.post("/api/price-estimate")
 async def price_estimate(req: PriceEstimateRequest):
     try:
-        return await estimate_price(req.label, req.services)
+        return await estimate_price(req.label, req.services, req.insurer)
     except Exception as e:
         logger.exception("[PRICE] Estimate failed for %s", req.label)
         raise HTTPException(status_code=502, detail=f"Could not estimate a price: {e}")
