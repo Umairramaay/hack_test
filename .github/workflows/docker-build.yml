@@ -17,14 +17,14 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GITHUB_TOKEN,REPO,APP_NAME,API_SECRET,VITE_API_BASE_URL
+          envs: GITHUB_TOKEN,REPO,APP_NAME,API_SECRET,VITE_API_BASE_URL,OPENAI_API_KEY,OPENAI_MODEL
           script: |
             cd /home/ubuntu/test/hack_test
             git pull https://x-access-token:$GITHUB_TOKEN@github.com/$REPO.git main
 
             # Write .env from GitHub secrets (never committed to the repo)
-            printf "APP_NAME=%s\nAPI_SECRET=%s\nVITE_API_BASE_URL=%s\n" \
-              "$APP_NAME" "$API_SECRET" "$VITE_API_BASE_URL" > .env
+            printf "APP_NAME=%s\nAPI_SECRET=%s\nVITE_API_BASE_URL=%s\nOPENAI_API_KEY=%s\nOPENAI_MODEL=%s\n" \
+              "$APP_NAME" "$API_SECRET" "$VITE_API_BASE_URL" "$OPENAI_API_KEY" "$OPENAI_MODEL" > .env
 
             chmod +x deploy.sh
             ./deploy.sh
@@ -34,3 +34,5 @@ jobs:
           APP_NAME: ${{ secrets.APP_NAME }}
           API_SECRET: ${{ secrets.API_SECRET }}
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ secrets.OPENAI_MODEL }}
