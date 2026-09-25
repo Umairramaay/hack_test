@@ -189,7 +189,6 @@ async def search_providers(service_type: str, lat: float, lng: float) -> list[di
         "model": OPENAI_MODEL,
         "tools": [{"type": "web_search_preview"}],
         "input": [{"role": "user", "content": [{"type": "input_text", "text": prompt}]}],
-        "text": {"format": {"type": "json_object"}},
         "max_output_tokens": 4096,
     }
 
@@ -212,10 +211,17 @@ async def search_providers(service_type: str, lat: float, lng: float) -> list[di
     logger.info("[PROVIDERS] LLM response_id=%s model=%s", raw.get("id", "?"), raw.get("model", "?"))
 
     text = _extract_text(raw)
+
+    # Strip markdown code fences if present (web_search mode can't use JSON mode)
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        lines = stripped.splitlines()
+        stripped = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+
     try:
-        data = json.loads(text)
+        data = json.loads(stripped)
     except json.JSONDecodeError as e:
-        raise ValueError(f"LLM returned invalid JSON: {e} | preview: {text[:300]}") from e
+        raise ValueError(f"LLM returned invalid JSON: {e} | preview: {stripped[:300]}") from e
 
     raw_providers: list[dict] = data.get("providers", [])
 
