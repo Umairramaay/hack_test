@@ -3,38 +3,39 @@ import InsuranceAnalyzer from './InsuranceAnalyzer'
 export default function App() {
   return (
     <div style={styles.page}>
+      <nav style={styles.nav}>
+        <div style={styles.brand}>
+          <div style={styles.logo}>✚</div>
+          <span style={styles.brandName}>Insurely</span>
+        </div>
+      </nav>
+
       <header style={styles.header}>
-        <h1 style={styles.title}>Understand Your Insurance</h1>
-        <p style={styles.subtitle}>AI-powered health insurance document analyzer</p>
+        <h1 style={styles.title}>Understand your health insurance</h1>
+        <p style={styles.subtitle}>
+          Upload your policy and Insurely shows what's covered, what you can use today, and which check-ups you can get for free.
+        </p>
       </header>
 
-      <div style={styles.card}>
-        <h2 style={styles.cardTitle}>Analyze Insurance Document</h2>
+      <main style={styles.main}>
         <InsuranceAnalyzer />
-      </div>
+      </main>
     </div>
   )
 }
 
 const styles = {
-  page: {
-    fontFamily: "'Segoe UI', system-ui, sans-serif",
-    maxWidth: 960,
-    margin: '0 auto',
-    padding: '32px 20px 60px',
-    color: '#1a1a2e',
-    background: '#f5f7fa',
-    minHeight: '100vh',
+  page: { minHeight: '100vh', padding: '20px 16px 80px' },
+  nav: { maxWidth: 920, margin: '0 auto 40px', display: 'flex', alignItems: 'center' },
+  brand: { display: 'flex', alignItems: 'center', gap: 10 },
+  brandName: { fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' },
+  header: { textAlign: 'center', maxWidth: 620, margin: '0 auto 32px' },
+  logo: {
+    width: 36, height: 36, borderRadius: 10, color: '#fff', fontSize: '1.05rem',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'linear-gradient(135deg,#4f46e5,#0ea5e9)', boxShadow: '0 6px 16px rgba(79,70,229,0.3)',
   },
-  header: { marginBottom: 32, textAlign: 'center' },
-  title: { margin: 0, fontSize: '2rem', fontWeight: 700, color: '#1a1a2e' },
-  subtitle: { margin: '8px 0 0', color: '#666', fontSize: '1rem' },
-  card: {
-    background: '#fff',
-    borderRadius: 12,
-    padding: '28px 32px',
-    marginBottom: 28,
-    boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-  },
-  cardTitle: { margin: '0 0 20px', fontSize: '1.15rem', fontWeight: 600, color: '#1a1a2e' },
+  title: { margin: 0, fontSize: 'clamp(1.7rem, 4vw, 2.3rem)', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' },
+  subtitle: { margin: '10px 0 0', color: '#64748b', fontSize: '1rem', lineHeight: 1.55 },
+  main: { maxWidth: 920, margin: '0 auto' },
 }

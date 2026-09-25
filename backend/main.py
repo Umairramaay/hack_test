@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from database import engine, get_db
 from ai_client import analyze_insurance_pdf
-from checkup.extract import extract_coverage, pdf_pages, verify_quotes
+from checkup.extract import extract_coverage, find_policy_start_date, pdf_pages, verify_quotes
 from checkup.match import build_plan, infer_product
 from models import Base, UserInsurance
 from provider_search import search_providers, VALID_SERVICE_TYPES
@@ -173,6 +173,7 @@ async def upload_insurance(
         coverage, used_demo = await extract_coverage(pages)
         rows_v, verification_summary = verify_quotes(coverage.get("rows", []), pages)
         coverage["rows"] = rows_v
+        coverage["policy_start_date"] = find_policy_start_date(pages) or coverage.get("policy_start_date")
 
         insurer = coverage.get("insurer", "")
         product = infer_product(insurer, coverage)

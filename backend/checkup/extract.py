@@ -1,6 +1,9 @@
 import json
 import logging
 import os
+import re
+import unicodedata
+from datetime import date
 from pathlib import Path
 from typing import Optional
 
@@ -59,6 +62,7 @@ class _LimitPool(BaseModel):
 class _CoverageExtraction(BaseModel):
     insurer: str
     product_as_written: str
+    policy_start_date: Optional[str] = None
     rows: list[_CoverageRow]
     limit_pools: list[_LimitPool]
 
@@ -148,6 +152,60 @@ async def extract_coverage(pages: list[dict]) -> tuple[dict, bool]:
 
     logger.warning("[EXTRACT] All attempts failed, using demo")
     return _load_demo(), True
+
+
+_DATE_RE = re.compile(r"(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})")
+
+# Waiting periods run from the date the person joined the policy, so the
+# join / effect date wins over the current annuity's start date.
+_START_LABELS = [
+    re.compile(r"data\s+de\s+ades[ãa]o|produ[çc][ãa]o\s+de\s+efeitos", re.I),
+    re.compile(r"data\s+de\s+efeito|in[íi]cio\s+d[oa]\s+(?:contrato|seguro|ap[óo]lice)", re.I),
+    re.compile(r"data\s+(?:de\s+)?in[íi]cio", re.I),
+]
+_DATA_WORD = re.compile(r"\bdata\b", re.I)
+
+
+def _to_iso(m: re.Match) -> Optional[str]:
+    day, month, year = (int(g) for g in m.groups())
+    try:
+        return date(year, month, day).isoformat()
+    except ValueError:
+        return None
+
+
+def _date_for_label(lines: list[str], i: int, m: re.Match) -> Optional[str]:
+    line = lines[i]
+    # "Data Início: 10/04/2026" — date right after the label
+    after = _DATE_RE.search(line, m.end())
+    if after and after.start() - m.end() <= 3:
+        return _to_iso(after)
+    # Table header ("Data de Início  Data de Vencimento") with dates on the
+    # row below — pick the date in the same column position.
+    col = len(_DATA_WORD.findall(line[:m.start()]))
+    # Headers often wrap over several lines, so look a few lines down.
+    for nxt in lines[i + 1:i + 5]:
+        dates = list(_DATE_RE.finditer(nxt))
+        if len(dates) > col:
+            return _to_iso(dates[col])
+    return None
+
+
+def find_policy_start_date(pages: list[dict]) -> Optional[str]:
+    """Find the policy start / join date in the PDF text. Returns YYYY-MM-DD or None."""
+    best: Optional[tuple[int, str]] = None
+    for p in pages:
+        lines = unicodedata.normalize("NFC", p["text"] or "").splitlines()
+        for i, line in enumerate(lines):
+            for prio, label in enumerate(_START_LABELS):
+                if best and prio >= best[0]:
+                    break
+                for m in label.finditer(line):
+                    found = _date_for_label(lines, i, m)
+                    if found:
+                        best = (prio, found)
+                        break
+    return best[1] if best else None
 
 
 def verify_quotes(rows: list[dict], pages: list[dict]) -> tuple[list[dict], str]:

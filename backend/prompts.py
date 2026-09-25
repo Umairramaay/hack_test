@@ -275,6 +275,12 @@ Rules:
     null. Never guess. Never fill a gap with general knowledge.
 15. Never output personal data: no names, tax numbers, addresses,
     policy numbers, client numbers or dates of birth.
+16. The date the person's cover started goes in policy_start_date as
+    YYYY-MM-DD. Waiting periods count from this date, so prefer the
+    join / effect date ("Data de adesão", "Data de produção de
+    efeitos", "Data de Efeito") over the current year's "Data de
+    Início". Never use the date of birth or issue date. This is not
+    personal data. If no start date is stated, use null.
 
 ## TASK B: EXTRACT CHECK-UP CONTENTS FROM AN INSURER BROCHURE
 Input: an insurer's public preventive check-up brochure, and HEALTH
@@ -329,6 +335,7 @@ the user message.
 {
   "insurer": string,
   "product_as_written": string,
+  "policy_start_date": "YYYY-MM-DD" or null,
   "rows": [
     {
       "service_id": string,
