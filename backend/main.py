@@ -14,7 +14,10 @@ from sqlalchemy.orm import Session
 
 from database import engine, get_db
 from ai_client import analyze_insurance_pdf
+from checkup.extract import extract_coverage, pdf_pages, verify_quotes
+from checkup.match import build_plan, infer_product
 from models import Base, UserInsurance
+from provider_search import search_providers, VALID_SERVICE_TYPES
 
 load_dotenv()
 
@@ -46,6 +49,36 @@ def to_folder_name(name: str) -> str:
     clean = re.sub(r"[^a-zA-Z0-9\s]", "", normalized).strip().lower()
     return re.sub(r"\s+", "_", clean) or "user"
 
+
+# ─── Provider search (LLM + web search) ──────────────────────────────────────
+
+@app.get("/api/providers")
+async def get_providers(service_type: str, lat: float, lng: float):
+    if service_type not in VALID_SERVICE_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid service_type. Must be one of: {', '.join(sorted(VALID_SERVICE_TYPES))}",
+        )
+    try:
+        providers = await search_providers(service_type, lat, lng)
+    except ValueError as e:
+        logger.error("[PROVIDERS] LLM parse error: %s", e)
+        raise HTTPException(status_code=502, detail=str(e))
+    except RuntimeError as e:
+        logger.error("[PROVIDERS] LLM search failed: %s", e)
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception:
+        logger.exception("[PROVIDERS] Unexpected error")
+        raise HTTPException(status_code=500, detail="Failed to search for providers.")
+
+    return {
+        "service_type": service_type,
+        "location":     {"latitude": lat, "longitude": lng},
+        "providers":    providers,
+    }
+
+
+# ─── Clinics (static data) ────────────────────────────────────────────────────
 
 CLINICS_DATA_PATH = os.path.join(os.path.dirname(__file__), "clinics_data.json")
 
@@ -121,20 +154,47 @@ async def upload_insurance(
         "uploaded_at": record.uploaded_at.isoformat(),
     }
 
-    # Run OPENAI analysis for PDFs
-    analysis = None
-    if ext == ".pdf":
-        if len(file_bytes) > MAX_ANALYZE_SIZE:
-            logger.warning("[ANALYSIS] PDF too large (%d MB), skipping analysis", len(file_bytes) // 1024 // 1024)
-        else:
-            try:
-                result = await analyze_insurance_pdf(file_bytes, original_name)
-                analysis = result.model_dump()
-            except Exception as e:
-                logger.error("[ANALYSIS] Failed: %s", e)
-                analysis = {"error": str(e)}
+    # Checkup plan extraction
+    coverage = None
+    checkup_plan = None
+    verification_summary = None
+    used_demo = None
 
-    return {"record": record_payload, "analysis": analysis}
+    _SEX_MAP = {"female": "F", "male": "M"}
+    sex_char = _SEX_MAP.get(gender)
+
+    if ext == ".pdf" and sex_char:
+        try:
+            pages = pdf_pages(save_path)
+        except Exception as e:
+            logger.warning("[CHECKUP] pdf_pages failed: %s", e)
+            pages = []
+
+        coverage, used_demo = await extract_coverage(pages)
+        rows_v, verification_summary = verify_quotes(coverage.get("rows", []), pages)
+        coverage["rows"] = rows_v
+
+        insurer = coverage.get("insurer", "")
+        product = infer_product(insurer, coverage)
+
+        try:
+            checkup_plan = build_plan(
+                sex=sex_char,
+                age=age,
+                coverage=coverage,
+                insurer=insurer,
+                product=product,
+            )
+        except Exception as e:
+            logger.error("[CHECKUP] build_plan failed: %s", e)
+
+    return {
+        "record": record_payload,
+        "coverage": coverage,
+        "checkup_plan": checkup_plan,
+        "verification_summary": verification_summary,
+        "used_demo": used_demo,
+    }
 
 
 @app.get("/records")

@@ -9,3 +9,5 @@ psycopg2-binary
 python-multipart
 psycopg[binary]
 python-dotenv
+pdfplumber
+rapidfuzz

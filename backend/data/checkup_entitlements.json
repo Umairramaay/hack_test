@@ -1,0 +1,92 @@
+{ "item_sets":{
+  "full":["clinical_eval_consult","blood_sugar","lipid_panel","urine_test","full_blood_count","bmi_waist","blood_pressure","results_consult","lifestyle_coaching"],
+  "light":["blood_sugar","total_cholesterol_only","bmi_waist","blood_pressure"]
+ },
+ "gate":"Applies only if the user's policy (table 4) shows the checkup service as covered.",
+ "insurers":[
+  {
+   "insurer":"Multicare",
+   "sex":"F",
+   "source_type":"insurer_public_brochure",
+   "source_url":"https://multicare.pt/hubfs/2025-Multicare/Documentacao/Multicare%2060+/seguro_saude_60+_checkup_feminino.pdf",
+   "edition":"SET 2026",
+   "cost":"free",
+   "cycle_rule":"Annual. Year 0 is mandatory and the most complete; year 1 is only authorised after year 0. At the end of a cycle, restart at year 1.",
+   "products":[
+    {"name":"Multicare 1","consult_mode":"remote_only"},
+    {"name":"Multicare 2 (8 consultations)","consult_mode":"remote_only"},
+    {"name":"Multicare 2 (€1,000 outpatient)","consult_mode":"in_person_or_remote"},
+    {"name":"Multicare 3","consult_mode":"in_person_or_remote"},
+    {"name":"60+ Multicare 1","consult_mode":"remote_only"},
+    {"name":"60+ Multicare 2","consult_mode":"in_person_or_remote"}
+   ],
+   "rows":[
+    {"age_min":18,"age_max":24,"cycle_years":[0,2],"set":"full","extra":["gyn_consult","cervical_cytology"],"page":1,"mapped_by":"hand",
+     "raw":"Análises/Exames: Glicemia em jejum, Colesterol total, HDL, Triglicéridos, Urina II, Hemograma completo, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal. Consultas: Inicial de avaliação clínica (2), Ginecologia com Citologia, Análise de resultados, Lifestyle coaching na Medicina Online (2)."},
+    {"age_min":18,"age_max":24,"cycle_years":[1],"set":"light","extra":[],"page":1,"mapped_by":"hand",
+     "raw":"Análises: Glicemia em jejum, Colesterol total, Medição do perímetro abdominal, Tensão arterial e Índice de Massa Corporal (IMC)."},
+    {"age_min":25,"age_max":44,"cycle_years":[0,4],"set":"full","extra":["gyn_consult","cervical_screening"],"page":1,"mapped_by":"hand",
+     "raw":"Análises/Exames: Glicemia em jejum, Colesterol total, HDL, Triglicéridos, Urina II, Hemograma completo, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal. Consultas: Inicial de avaliação clínica (2), Ginecolgia com teste HPV, Análise de resultados, Lifestyle coaching na Medicina Online (2)."},
+    {"age_min":25,"age_max":44,"cycle_years":[1,3],"set":"light","extra":[],"page":1,"mapped_by":"hand",
+     "raw":"Análises: Glicemia em jejum, Colesterol total, Medição do perímetro abdominal, Tensão arterial e Índice de Massa Corporal (IMC)."},
+    {"age_min":25,"age_max":44,"cycle_years":[2],"set":"full","extra":[],"page":1,"mapped_by":"hand",
+     "raw":"Análises/Exames: Glicemia em jejum, Colesterol total, HDL, Triglicéridos, Urina II, Hemograma completo, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal. Consultas: Inicial de avaliação clínica(2), Análise de resultados, Lifestyle coaching na Medicina Online (2)."},
+    {"age_min":45,"age_max":49,"cycle_years":[0,4],"set":"full","extra":["breast_screening","breast_ultrasound","gyn_consult","cervical_screening"],"page":1,"mapped_by":"hand",
+     "raw":"Análises/Exames: Glicemia em jejum, Colesterol total, HDL, Triglicéridos, Urina II, Hemograma completo, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal, Mamografia, Ecografia mamária. Consultas: Inicial de avaliação clínica (2), Ginecolgia com teste HPV, Análise de resultados, Lifestyle coaching na Medicina Online (2)."},
+    {"age_min":45,"age_max":49,"cycle_years":[1,3],"set":"light","extra":[],"page":1,"mapped_by":"hand",
+     "raw":"Análises: Glicemia em jejum, Colesterol Total, Medição do perímetro abdominal, Tensão arterial e Índice de Massa Corporal (IMC)."},
+    {"age_min":45,"age_max":49,"cycle_years":[2],"set":"full","extra":["breast_screening","breast_ultrasound","gyn_consult"],"page":1,"mapped_by":"hand",
+     "raw":"Análises/Exames: Glicemia em jejum, Colesterol total, HDL, Triglicéridos, Urina II, Hemograma completo, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal, Mamografia, Ecografia mamária. Consultas: Inicial de avaliação clínica (2), Ginecolgia, Análise de resultados, Lifestyle coaching na Medicina Online (2)."},
+    {"age_min":50,"age_max":75,"cycle_years":[0,4],"set":"full","extra":["vitamin_b12_folate","colorectal_screening","breast_screening","breast_ultrasound","gyn_consult","cervical_screening"],"page":1,"mapped_by":"hand",
+     "raw":"Análises/Exames: Glicemia em jejum, Colesterol total, HDL, Triglicéridos, Urina II, vitamina B12 e ácido fólico, Hemograma completo, Pesquisa de sangue oculto nas fezes, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal, Mamografia, Ecografia mamária. Consultas: Inicial de avaliação clínica (2), Ginecolgia com teste HPV, Análise de resultados, Lifestyle coaching na Medicina Online (2)."},
+    {"age_min":50,"age_max":75,"cycle_years":[1,3],"set":"light","extra":[],"page":1,"mapped_by":"hand",
+     "raw":"Análises: Glicemia em jejum, Colesterol total, Medição do perímetro abdominal, Tensão arterial e Índice de Massa Corporal (IMC)."},
+    {"age_min":50,"age_max":75,"cycle_years":[2],"set":"full","extra":["vitamin_b12_folate","colorectal_screening","breast_screening","breast_ultrasound","gyn_consult"],"page":1,"mapped_by":"hand",
+     "raw":"Análises/Exames: Glicemia em jejum, Colesterol total, HDL, Triglicéridos, Urina II, vitamina B12 e ácido fólico, Hemograma completo, Pesquisa de sangue oculto nas fezes, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal, Mamografia, Ecografia mamária. Consultas: Inicial de avaliação clínica (2), Ginecolgia, Análise de resultados, Lifestyle coaching na Medicina Online (2)."},
+    {"age_min":76,"age_max":null,"cycle_years":[0,2],"set":"full","extra":["vitamin_b12_folate","kidney_liver_panel","colorectal_screening"],"page":1,"mapped_by":"hand",
+     "raw":"Análises/Exames: Glicemia em jejum, Colesterol total, HDL, Triglicéridos, Urina II, vitamina B12 e ácido fólico, Hemograma completo, Creatinina, ALT, AST, Gama-GT, Pesquisa de sangue oculto nas fezes, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal. Consultas: Inicial de avaliação clínica (2), Análise de resultados, Lifestyle coaching na Medicina Online (2)."},
+    {"age_min":76,"age_max":null,"cycle_years":[1],"set":"light","extra":[],"page":1,"mapped_by":"hand",
+     "raw":"Análises/Exames: Glicemia em jejum, Colesterol total, Medição do perímetro abdominal, Tensão arterial e Índice de Massa Corporal (IMC)."}
+   ]
+  },
+  {
+   "insurer":"Multicare",
+   "sex":"M",
+   "source_type":"insurer_public_brochure",
+   "source_url":"https://multicare.pt/hubfs/2025-Multicare/Documentacao/Multicare-123/seguro_saude_123_medicina_preventiva_masculino.pdf",
+   "edition":"DEZ 2024",
+   "cost":"free",
+   "cycle_rule":"Annual. Year 0 is mandatory and the most complete; year 1 is only authorised after year 0. At the end of a cycle, restart at year 1.",
+   "products":[
+    {"name":"Multicare 1","consult_mode":"remote_only"},
+    {"name":"Multicare 2 (8 consultations)","consult_mode":"remote_only"},
+    {"name":"Multicare 2 (€1,000 outpatient)","consult_mode":"in_person_or_remote"},
+    {"name":"Multicare 3","consult_mode":"in_person_or_remote"},
+    {"name":"60+ Multicare 1","consult_mode":"remote_only"},
+    {"name":"60+ Multicare 2","consult_mode":"in_person_or_remote"}
+   ],
+   "rows":[
+    {"age_min":18,"age_max":49,"cycle_years":[0,2],"set":"full","extra":[],"page":1,"mapped_by":"hand",
+     "raw":"Análises/Exames: Glicemia em jejum, Colesterol total, HDL, Triglicéridos, Urina II, Hemograma completo, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal. Consultas: Inicial de avaliação clínica(2), Análise de resultados, Lifestyle coaching na Medicina Online (2)."},
+    {"age_min":18,"age_max":49,"cycle_years":[1],"set":"light","extra":[],"page":1,"mapped_by":"hand",
+"raw":"Análises: Glicemia em jejum, Colesterol total, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal."},
+    {"age_min":50,"age_max":75,"cycle_years":[0,2],"set":"full","extra":["vitamin_b12_folate","psa_test","colorectal_screening","urology_consult"],"page":1,"mapped_by":"hand",
+     "raw":"Análises/Exames: Glicemia em jejum, Colesterol total, HDL, Triglicéridos, Urina II, vitamina B12 e ácido fólico, Hemograma completo, PSA, Pesquisa de sangue oculto nas fezes, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal. Consultas: Inicial de avaliação clínica (2), Urologia, Análise de resultados, Lifestyle coaching na Medicina Online (2)."},
+    {"age_min":50,"age_max":75,"cycle_years":[1],"set":"light","extra":[],"page":1,"mapped_by":"hand",
+     "raw":"Análises: Glicemia em jejum, Colesterol total, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal."},
+    {"age_min":76,"age_max":null,"cycle_years":[0,2],"set":"full","extra":["vitamin_b12_folate","kidney_liver_panel","colorectal_screening"],"page":1,"mapped_by":"hand",
+     "raw":"Análises/Exames: Glicemia em jejum, Colesterol total, HDL, Triglicéridos, Urina II, vitamina B12 e ácido fólico, Hemograma completo, Creatinina, ALT, AST, Gama-GT, Pesquisa de sangue oculto nas fezes, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal. Consultas: Inicial de avaliação clínica (2), Análise de resultados, Lifestyle coaching na Medicina Online (2)."},
+    {"age_min":76,"age_max":null,"cycle_years":[1],"set":"light","extra":[],"page":1,"mapped_by":"hand",
+     "raw":"Análises: Glicemia em jejum, Colesterol total, Índice de Massa Corporal (IMC), Tensão arterial, Medição do perímetro abdominal."}
+   ]
+  },
+  {
+   "insurer":"Médis",
+   "sex":"Any",
+   "source_type":"insurer_public_brochure",
+   "status":"no_public_protocol_found",
+   "products":[],
+   "rows":[]
+  }
+ ]
+}

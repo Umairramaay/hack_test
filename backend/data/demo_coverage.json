@@ -1,0 +1,41 @@
+{
+ "policy":{"insurer":"Multicare","product_as_written":"MULTICARE INDIVIDUAL","product_confirmed":"Multicare 2 (€1,000 outpatient)"},
+ "rows":[
+  {"service_id":"gp_consult","network":{"type":"fixed_copay","amount_eur":19},"out_of_network":{"type":"reimbursement","pct":40},"limit_pool":"outpatient","waiting_days":60,"inherited_from_parent":true,"page":2,"quote":"Consultas (1) €19,00","verified":true},
+  {"service_id":"specialist_consult","network":{"type":"fixed_copay","amount_eur":19},"out_of_network":{"type":"reimbursement","pct":40},"limit_pool":"outpatient","waiting_days":60,"inherited_from_parent":true,"page":2,"quote":"Consultas (1) €19,00","verified":true},
+  {"service_id":"urgent_care","network":{"type":"fixed_copay","amount_eur":50},"out_of_network":{"type":"reimbursement","pct":40},"limit_pool":"outpatient","waiting_days":60,"inherited_from_parent":true,"page":2,"quote":"Permanente (1) €50,00","verified":true},
+  {"service_id":"online_consult","network":{"type":"free"},"out_of_network":{"type":"not_stated"},"page":4,"quote":"Medicina Online - 100% 0%","verified":true},
+  {"service_id":"home_visit","network":{"type":"fixed_copay","amount_eur":25},"out_of_network":{"type":"not_covered"},"waiting_days":60,"page":3,"quote":"Domiciliárias (1) €25,00","verified":true},
+  {"service_id":"psychology","network":{"type":"fixed_copay","amount_eur":19},"out_of_network":{"type":"not_stated"},"limit_pool":"psych","waiting_days":60,"inherited_from_parent":true,"page":3,"quote":"Sessão (1) €19,00","verified":true},
+  {"service_id":"psychiatry","network":{"type":"fixed_copay","amount_eur":19},"out_of_network":{"type":"not_stated"},"limit_pool":"psych","waiting_days":60,"inherited_from_parent":true,"page":3,"quote":"Sessão (1) €19,00","verified":true},
+  {"service_id":"blood_tests","network":{"type":"percent_copay","pct":10,"min_eur":2},"out_of_network":{"type":"reimbursement","pct":40},"limit_pool":"outpatient","waiting_days":60,"inherited_from_parent":true,"page":2,"quote":"(1) 10% mín. €2,00","verified":true},
+  {"service_id":"ultrasound","network":{"type":"fixed_copay","amount_eur":15},"out_of_network":{"type":"reimbursement","pct":40},"limit_pool":"outpatient","waiting_days":60,"inherited_from_parent":true,"page":2,"quote":"Ecografia (1) €15,00","verified":true},
+  {"service_id":"xray","network":{"type":"fixed_copay","amount_eur":10},"out_of_network":{"type":"reimbursement","pct":40},"limit_pool":"outpatient","waiting_days":60,"inherited_from_parent":true,"page":2,"quote":"Exames - Rx (1) €10,00","verified":true},
+  {"service_id":"ct_scan","network":{"type":"fixed_copay","amount_eur":30},"out_of_network":{"type":"reimbursement","pct":40},"limit_pool":"outpatient","waiting_days":60,"inherited_from_parent":true,"page":2,"quote":"Exames - TAC (1) €30,00","verified":true},
+  {"service_id":"mri","network":{"type":"fixed_copay","amount_eur":70},"out_of_network":{"type":"reimbursement","pct":40},"limit_pool":"outpatient","waiting_days":60,"inherited_from_parent":true,"page":2,"quote":"(1) €70,00","verified":true},
+  {"service_id":"pathology","network":{"type":"fixed_copay","amount_eur":10},"out_of_network":{"type":"reimbursement","pct":40},"limit_pool":"outpatient","waiting_days":60,"inherited_from_parent":true,"page":2,"quote":"Patológica (1) €10,00","verified":true},
+  {"service_id":"other_exams","network":{"type":"percent_copay","pct":15},"out_of_network":{"type":"reimbursement","pct":40},"limit_pool":"outpatient","waiting_days":60,"page":2,"quote":"€1.000,00 85% 15% 40% 60% 60 dias","verified":true},
+  {"service_id":"physio","network":{"type":"percent_copay","pct":50},"out_of_network":{"type":"not_stated"},"limit_pool":"physio","page":3,"quote":"€250,00 50% 50%","verified":true},
+  {"service_id":"speech_therapy","network":{"type":"fixed_copay","amount_eur":17.5},"out_of_network":{"type":"not_stated"},"limit_pool":"physio","page":3,"quote":"Fala (1) €17,50","verified":true},
+  {"service_id":"alt_therapies","network":{"type":"network_discount"},"out_of_network":{"type":"not_covered"},"page":3,"quote":"Convencionais - 0% 100% 0% 100%","verified":true},
+  {"service_id":"checkup","network":{"type":"free"},"out_of_network":{"type":"not_covered"},"waiting_days":60,"page":4,"quote":"Medicina Preventiva - 100% 0% 0% 100% 60 dias","verified":true},
+  {"service_id":"dental_checkup","network":{"type":"network_discount"},"out_of_network":{"type":"not_covered"},"page":3,"quote":"Medicina Dentária - 0% 100% 0% 100%","verified":true},
+  {"service_id":"dental_treatment","network":{"type":"network_discount"},"out_of_network":{"type":"not_covered"},"page":3,"quote":"Medicina Dentária - 0% 100% 0% 100%","verified":true},
+  {"service_id":"glasses","network":{"type":"network_discount"},"out_of_network":{"type":"not_covered"},"page":3,"quote":"Óticas - 0% 100% 0% 100%","verified":true},
+  {"service_id":"hospital_stay","network":{"type":"percent_copay","pct":10,"min_eur":250,"max_eur":500},"out_of_network":{"type":"reimbursement","pct":40},"limit_pool":"hospital","waiting_days":180,"deductible":"10% per claim, min €250, max €500 (network)","page":1,"quote":"€50.000,00 100% 0% 40% 60% 180 dias","verified":true},
+  {"service_id":"day_surgery","network":{"type":"percent_copay","pct":10,"min_eur":250,"max_eur":500},"out_of_network":{"type":"not_stated"},"limit_pool":"hospital","waiting_days":180,"inherited_from_parent":true,"deductible":"10% per claim, min €250, max €500 (network)","page":2,"quote":"100% 0% 180 dias","verified":true},
+  {"service_id":"childbirth","network":{"type":"free"},"out_of_network":{"type":"not_stated"},"waiting_days":365,"deductible":"€500 annual (network)","page":2,"quote":"Parto 100% 0% 365 dias","verified":true},
+  {"service_id":"psych_hospital","network":{"type":"free"},"out_of_network":{"type":"not_covered"},"limit_pool":"psych_hospital","waiting_days":180,"deductible":"Possibly 10% per claim, min €250, max €500; row placement unclear","page":1,"quote":"€5.500,00 100% 0% 0% 100% 180 dias","verified":false},
+  {"service_id":"ambulance","network":{"type":"not_stated"},"out_of_network":{"type":"not_stated"},"page":2,"quote":"Transporte De","verified":true},
+  {"service_id":"medication","network":{"type":"not_stated"},"out_of_network":{"type":"not_stated"},"page":3,"quote":"Entrega De Medicamentos - 0% 100%","verified":true},
+  {"service_id":"care_abroad","network":{"type":"not_stated"},"out_of_network":{"type":"reimbursement","pct":40},"page":3,"quote":"No Estrangeiro - 40% 60%","verified":true},
+  {"service_id":"sns_fees","network":{"type":"not_stated"},"out_of_network":{"type":"reimbursement","pct":100},"page":1,"quote":"Moderadoras 100% 0%","verified":true}
+ ],
+ "limit_pools":[
+  {"id":"outpatient","amount_eur":1000,"parent":null},
+  {"id":"psych","amount_eur":300,"parent":null},
+  {"id":"physio","amount_eur":250,"parent":null},
+  {"id":"hospital","amount_eur":50000,"parent":null},
+  {"id":"psych_hospital","amount_eur":5500,"parent":null}
+ ]
+}

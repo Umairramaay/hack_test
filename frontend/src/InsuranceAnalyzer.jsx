@@ -1,13 +1,13 @@
 import { useRef, useState } from 'react'
+import ProviderSearch from './ProviderSearch'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
 const ANALYSIS_STEPS = [
-  'Reading policy',
-  'Finding coverage',
-  'Checking limits',
-  'Finding exclusions',
-  'Identifying important conditions',
+  'Reading your policy',
+  'Extracting coverage',
+  'Verifying quotes',
+  'Building your plan',
 ]
 
 function Badge({ children, color }) {
@@ -26,234 +26,343 @@ function Badge({ children, color }) {
   )
 }
 
-function SectionHeader({ children }) {
-  return (
-    <h3 style={{ margin: '28px 0 12px', fontSize: '1rem', fontWeight: 700, color: '#1a1a2e', borderBottom: '2px solid #e5e7eb', paddingBottom: 8 }}>
-      {children}
-    </h3>
-  )
+// ─── Shared helpers ──────────────────────────────────────────────────────────
+
+const SERVICE_LABELS = {
+  gp_consult: 'GP Consultation', specialist_consult: 'Specialist Consultation',
+  urgent_care: 'Urgent Care', online_consult: 'Online Consultation',
+  home_visit: 'Home Visit', psychology: 'Psychology', psychiatry: 'Psychiatry',
+  blood_tests: 'Blood Tests', ultrasound: 'Ultrasound', xray: 'X-Ray',
+  ct_scan: 'CT Scan', mri: 'MRI', pathology: 'Pathology', other_exams: 'Other Exams',
+  physio: 'Physiotherapy', speech_therapy: 'Speech Therapy', alt_therapies: 'Alt. Therapies',
+  checkup: 'Annual Check-up', dental_checkup: 'Dental Check-up',
+  dental_treatment: 'Dental Treatment', glasses: 'Glasses/Optical',
+  hospital_stay: 'Hospital Stay', day_surgery: 'Day Surgery', childbirth: 'Childbirth',
+  psych_hospital: 'Psychiatric Hospital', ambulance: 'Ambulance',
+  medication: 'Medication', care_abroad: 'Care Abroad', sns_fees: 'SNS Fees',
 }
 
-function SourceTag({ source }) {
-  if (!source?.page && !source?.section) return null
-  const parts = []
-  if (source.page) parts.push(`p.${source.page}`)
-  if (source.section) parts.push(source.section)
-  return (
-    <span style={{ fontSize: '0.72rem', color: '#9ca3af', marginLeft: 6 }}>
-      [{parts.join(' · ')}]
-    </span>
-  )
+function networkText(n) {
+  if (!n) return '—'
+  const t = n.type
+  if (t === 'free') return 'Free'
+  if (t === 'fixed_copay') return `€${n.amount_eur} copay`
+  if (t === 'percent_copay') return `${n.pct}%${n.min_eur ? ` (min €${n.min_eur})` : ''}`
+  if (t === 'network_discount') return 'Network price'
+  if (t === 'not_covered') return 'Not covered'
+  if (t === 'not_stated') return 'Not stated'
+  return n.type || '—'
 }
 
-function CoverageTable({ coverage }) {
-  if (!coverage?.length) return <p style={s.empty}>No coverage data found.</p>
+// ─── Extraction details ───────────────────────────────────────────────────────
+
+function ExtractionDetails({ coverage }) {
+  const [open, setOpen] = useState(false)
+  if (!coverage) return null
+  const poolMap = Object.fromEntries((coverage.limit_pools || []).map(p => [p.id, `€${p.amount_eur}/yr`]))
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={s.table}>
-        <thead>
-          <tr>
-            {['Benefit', 'Covered', 'Limit', 'Copayment', 'Waiting Period', 'Auth Required', 'Source'].map(h => (
-              <th key={h} style={s.th}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {coverage.map((item, i) => (
-            <tr key={i} style={i % 2 === 0 ? s.trEven : s.trOdd}>
-              <td style={{ ...s.td, fontWeight: 500 }}>
-                {item.category}
-                {item.description && <div style={{ fontSize: '0.78rem', color: '#6b7280', marginTop: 2 }}>{item.description}</div>}
-              </td>
-              <td style={s.td}>
-                {item.covered === true ? <Badge color="green">Yes</Badge>
-                  : item.covered === false ? <Badge color="red">No</Badge>
-                  : <Badge color="gray">Unknown</Badge>}
-              </td>
-              <td style={s.td}>{item.limit ?? '—'}</td>
-              <td style={s.td}>{item.copayment ?? '—'}</td>
-              <td style={s.td}>{item.waiting_period ?? '—'}</td>
-              <td style={s.td}>
-                {item.authorization_required === true ? <Badge color="yellow">Yes</Badge>
-                  : item.authorization_required === false ? <Badge color="green">No</Badge>
-                  : '—'}
-              </td>
-              <td style={s.td}><SourceTag source={item.source} /></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div style={{ marginTop: 16 }}>
+      <button onClick={() => setOpen(o => !o)} style={s.detailBtn}>
+        {open ? '▲' : '▼'} Extraction details — what was read from your PDF
+      </button>
+      {open && (
+        <div style={{ marginTop: 8, border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ padding: '10px 14px', background: '#f8fafc', borderBottom: '1px solid #e5e7eb', fontSize: '0.85rem' }}>
+            <strong>{coverage.insurer || 'Unknown insurer'}</strong>
+            {coverage.product_as_written && (
+              <span style={{ color: '#6b7280', marginLeft: 8 }}>· {coverage.product_as_written}</span>
+            )}
+            {coverage.limit_pools?.length > 0 && (
+              <span style={{ marginLeft: 12, fontSize: '0.78rem', color: '#6b7280' }}>
+                Annual limits: {coverage.limit_pools.map(p => `${p.id}: €${p.amount_eur}`).join(' · ')}
+              </span>
+            )}
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={s.table}>
+              <thead>
+                <tr>
+                  {['Service', 'In-network', 'Out-of-network', 'Annual limit', 'Waiting', 'Source'].map(h => (
+                    <th key={h} style={s.th}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(coverage.rows || []).map((row, i) => (
+                  <tr key={i} style={i % 2 === 0 ? s.trEven : s.trOdd}>
+                    <td style={{ ...s.td, fontWeight: 500 }}>{SERVICE_LABELS[row.service_id] || row.service_id}</td>
+                    <td style={s.td}>{networkText(row.network)}</td>
+                    <td style={s.td}>{networkText(row.out_of_network)}</td>
+                    <td style={s.td}>{row.limit_pool ? (poolMap[row.limit_pool] || row.limit_pool) : '—'}</td>
+                    <td style={s.td}>{row.waiting_days ? `${row.waiting_days}d` : '—'}</td>
+                    <td style={s.td}>
+                      {row.page && <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>p.{row.page}</span>}
+                      {row.quote && <div style={{ fontSize: '0.72rem', color: '#9ca3af', fontStyle: 'italic' }}>"{row.quote}"</div>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function CardList({ items, renderItem }) {
-  if (!items?.length) return <p style={s.empty}>None identified.</p>
-  return <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>{items.map(renderItem)}</div>
+// ─── Plan computation details ─────────────────────────────────────────────────
+
+function PlanComputationDetails({ checkup_plan }) {
+  const [open, setOpen] = useState(false)
+  if (!checkup_plan) return null
+  const { recommended = [], included_in_insurance = [], fallback_message, product_used, product_inferred } = checkup_plan
+  const checkupTableFound = included_in_insurance.length > 0 || recommended.some(r => r.best_option?.source === 'insurance_checkup')
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button onClick={() => setOpen(o => !o)} style={s.detailBtn}>
+        {open ? '▲' : '▼'} How this plan was computed
+      </button>
+      {open && (
+        <div style={{ marginTop: 8, border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+          <div style={{ padding: '10px 14px', background: '#f8fafc', borderBottom: '1px solid #e5e7eb', fontSize: '0.85rem', display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+            {product_used && <span><strong>Product:</strong> {product_used}{product_inferred ? ' (inferred)' : ''}</span>}
+            <span><strong>Check-up table:</strong> {checkupTableFound ? '✓ Found' : '✗ Not found — using policy prices'}</span>
+            <span><strong>Fallback:</strong> {fallback_message ? 'Yes' : 'No'}</span>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={s.table}>
+              <thead>
+                <tr>
+                  {['Test', 'Strength', 'Source', 'Cost logic', 'Status'].map(h => (
+                    <th key={h} style={s.th}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {recommended.map((item, i) => {
+                  const bo = item.best_option || {}
+                  const sourceLabel = { insurance_checkup: 'Annual check-up', sns: 'SNS (free)', insurance_policy: 'Policy coverage' }[bo.source] || bo.source
+                  return (
+                    <tr key={i} style={i % 2 === 0 ? s.trEven : s.trOdd}>
+                      <td style={{ ...s.td, fontWeight: 500 }}>{item.label}</td>
+                      <td style={s.td}>{item.strength}</td>
+                      <td style={s.td}>{sourceLabel}</td>
+                      <td style={s.td}>{bo.cost_text || (bo.cost_eur != null ? `€${bo.cost_eur}` : 'Free')}</td>
+                      <td style={s.td}>{item.status}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
-function AnalysisResult({ record, analysis }) {
-  const { document, policy_overview: po, executive_summary,
-    coverage, exclusions, waiting_periods, financial_limits,
-    network_rules, preventive_care, important_conditions,
-    practical_questions, unclear_or_missing_information } = analysis
+// ─── Checkup plan components ─────────────────────────────────────────────────
+
+function CheckupItemCard({ item }) {
+  const [open, setOpen] = useState(false)
+  const bo = item.best_option || {}
+
+  const strengthColor = { official: 'green', guideline: 'blue', general: 'gray' }[item.strength] || 'gray'
+  const isFree = bo.source === 'insurance_checkup' || bo.source === 'sns'
+  const costText = isFree ? 'Free' : (bo.cost_text || (bo.cost_eur != null ? `€${bo.cost_eur}` : '—'))
+
+  const hasEvidence = bo.source === 'insurance_policy' && !!bo.evidence?.length
+  const canShowSource = hasEvidence || bo.source === 'insurance_checkup'
+
+  const warn = !item.rec_verified ||
+    (bo.source === 'insurance_policy' && (!hasEvidence || bo.evidence.some(e => !e.verified)))
 
   return (
-    <div>
-      {/* Who uploaded */}
-      <div style={s.uploadedBy}>
-        Analyzed for <strong>{record.name}</strong> · Age {record.age} ·{' '}
-        {record.gender.charAt(0).toUpperCase() + record.gender.slice(1)} ·{' '}
-        <span style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>{record.filepath}</span>
+    <div style={s.infoCard}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1a1a2e', flex: 1, minWidth: 0 }}>
+          {warn ? '⚠️ ' : ''}{item.label}
+        </span>
+        {item.strength && <Badge color={strengthColor}>{item.strength}</Badge>}
+        {item.status && item.status !== 'eligible now' && item.status !== 'note' && (
+          <Badge color="yellow">{item.status}</Badge>
+        )}
+        {item.status === 'note' && <Badge color="gray">with another test</Badge>}
       </div>
 
-      {/* Policy overview */}
-      <div style={s.overviewGrid}>
-        {[
-          ['Insurer', po?.insurer],
-          ['Policy', po?.policy_name],
-          ['Type', po?.policy_type],
-          ['Period', po?.policy_period],
-          ['Region', po?.geographical_coverage],
-          ['Pages', document?.page_count],
-        ].map(([label, val]) => (
-          <div key={label} style={s.overviewItem}>
-            <div style={s.overviewLabel}>{label}</div>
-            <div style={s.overviewValue}>{val ?? '—'}</div>
-          </div>
-        ))}
+      {item.screens_for && (
+        <div style={{ fontSize: '0.82rem', color: '#6b7280', marginTop: 3 }}>
+          Screens for: {item.screens_for}
+        </div>
+      )}
+
+      <div style={{ marginTop: 8, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'baseline' }}>
+        <span style={{ fontWeight: 600, fontSize: '0.88rem', color: isFree ? '#166534' : '#1a1a2e' }}>
+          {costText}
+        </span>
+        {bo.label && (
+          <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>{bo.label}</span>
+        )}
+        {item.next_due && (
+          <span style={{ fontSize: '0.78rem', color: '#9ca3af' }}>· {item.next_due}</span>
+        )}
       </div>
 
-      {executive_summary && (
-        <>
-          <SectionHeader>Summary</SectionHeader>
-          <p style={{ lineHeight: 1.7, color: '#374151', fontSize: '0.95rem' }}>{executive_summary}</p>
-        </>
+      {canShowSource && (
+        <button
+          onClick={() => setOpen(o => !o)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4f46e5', fontSize: '0.78rem', padding: '4px 0 0', display: 'block' }}
+        >
+          {open ? '▲ Hide source' : '▼ See source'}
+        </button>
       )}
 
-      <SectionHeader>Coverage</SectionHeader>
-      <CoverageTable coverage={coverage} />
-
-      {!!important_conditions?.length && (
-        <>
-          <SectionHeader>Important Conditions</SectionHeader>
-          <CardList items={important_conditions} renderItem={(item, i) => (
-            <div key={i} style={{ ...s.alertCard, borderLeftColor: item.importance === 'high' ? '#ef4444' : '#f59e0b' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <strong style={{ fontSize: '0.9rem' }}>{item.title}</strong>
-                <Badge color={item.importance === 'high' ? 'red' : 'yellow'}>{item.importance}</Badge>
-                <SourceTag source={item.source} />
+      {open && (
+        <div style={{ marginTop: 6, background: '#f8fafc', borderRadius: 6, padding: '8px 12px', fontSize: '0.8rem', border: '1px solid #e5e7eb' }}>
+          {bo.source === 'insurance_checkup' && (
+            <span style={{ color: '#374151' }}>{bo.label}</span>
+          )}
+          {bo.source === 'insurance_policy' && (
+            bo.breakdown?.length > 0 ? (
+              <div>
+                <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', marginBottom: 6 }}>Cost breakdown:</div>
+                {bo.breakdown.map((b, i) => (
+                  <div key={i} style={{ marginBottom: i < bo.breakdown.length - 1 ? 8 : 0 }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                      <span style={{ color: '#374151', fontWeight: 500 }}>{SERVICE_LABELS[b.service_id] || b.service_id}</span>
+                      <span style={{ color: '#4f46e5', fontWeight: 600 }}>{b.cost_text}</span>
+                    </div>
+                    {b.evidence && (
+                      <div style={{ color: '#9ca3af', fontSize: '0.75rem', marginTop: 2 }}>
+                        {b.evidence.page != null && <span>p.{b.evidence.page}: </span>}
+                        {b.evidence.quote && <em>"{b.evidence.quote}"</em>}
+                        {!b.evidence.verified && <span style={{ color: '#b45309' }}> ⚠️ not found</span>}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-              <p style={{ margin: 0, color: '#374151', fontSize: '0.88rem', lineHeight: 1.6 }}>{item.description}</p>
-            </div>
-          )} />
-        </>
-      )}
-
-      {!!waiting_periods?.length && (
-        <>
-          <SectionHeader>Waiting Periods</SectionHeader>
-          <CardList items={waiting_periods} renderItem={(item, i) => (
-            <div key={i} style={s.infoCard}>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <strong style={{ fontSize: '0.9rem' }}>{item.benefit}</strong>
-                <Badge color="yellow">{item.period}</Badge>
-                <SourceTag source={item.source} />
-              </div>
-              {item.description && <p style={{ margin: '4px 0 0', color: '#374151', fontSize: '0.85rem' }}>{item.description}</p>}
-            </div>
-          )} />
-        </>
-      )}
-
-      {!!financial_limits?.length && (
-        <>
-          <SectionHeader>Financial Limits</SectionHeader>
-          <CardList items={financial_limits} renderItem={(item, i) => (
-            <div key={i} style={s.infoCard}>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <strong style={{ fontSize: '0.9rem' }}>{item.benefit}</strong>
-                <Badge color="blue">{item.limit}{item.period ? ` / ${item.period}` : ''}</Badge>
-                <SourceTag source={item.source} />
-              </div>
-              {item.conditions && <p style={{ margin: '4px 0 0', color: '#374151', fontSize: '0.85rem' }}>{item.conditions}</p>}
-            </div>
-          )} />
-        </>
-      )}
-
-      {!!exclusions?.length && (
-        <>
-          <SectionHeader>Exclusions</SectionHeader>
-          <CardList items={exclusions} renderItem={(item, i) => (
-            <div key={i} style={{ ...s.alertCard, borderLeftColor: '#6b7280' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <strong style={{ fontSize: '0.9rem' }}>{item.title}</strong>
-                <SourceTag source={item.source} />
-              </div>
-              <p style={{ margin: 0, color: '#374151', fontSize: '0.88rem', lineHeight: 1.6 }}>{item.description}</p>
-            </div>
-          )} />
-        </>
-      )}
-
-      {!!preventive_care?.length && (
-        <>
-          <SectionHeader>Preventive Care</SectionHeader>
-          <CardList items={preventive_care} renderItem={(item, i) => (
-            <div key={i} style={s.infoCard}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <strong style={{ fontSize: '0.9rem' }}>{item.benefit}</strong>
-                <SourceTag source={item.source} />
-              </div>
-              <p style={{ margin: '4px 0 0', color: '#374151', fontSize: '0.85rem' }}>{item.description}</p>
-            </div>
-          )} />
-        </>
-      )}
-
-      {!!network_rules?.length && (
-        <>
-          <SectionHeader>Network &amp; Provider Rules</SectionHeader>
-          <CardList items={network_rules} renderItem={(item, i) => (
-            <div key={i} style={s.infoCard}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <strong style={{ fontSize: '0.9rem' }}>{item.rule}</strong>
-                <SourceTag source={item.source} />
-              </div>
-              <p style={{ margin: '4px 0 0', color: '#374151', fontSize: '0.85rem' }}>{item.description}</p>
-            </div>
-          )} />
-        </>
-      )}
-
-      {!!practical_questions?.length && (
-        <>
-          <SectionHeader>Questions You Can Answer</SectionHeader>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {practical_questions.map((q, i) => (
-              <div key={i} style={s.qaCard}>
-                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#1a1a2e', marginBottom: 4 }}>
-                  {q.question} <SourceTag source={q.source} />
+            ) : (
+              bo.evidence?.map((ev, i) => (
+                <div key={i} style={{ marginTop: i > 0 ? 6 : 0, color: '#374151' }}>
+                  {ev.page != null && <span style={{ color: '#9ca3af', marginRight: 4 }}>p.{ev.page}:</span>}
+                  <em>"{ev.quote}"</em>
+                  {!ev.verified && <span style={{ color: '#b45309', marginLeft: 8 }}>⚠️ not found in document</span>}
                 </div>
-                <div style={{ color: '#374151', fontSize: '0.88rem', lineHeight: 1.6 }}>{q.answer}</div>
-              </div>
-            ))}
-          </div>
-        </>
+              ))
+            )
+          )}
+        </div>
       )}
 
-      {!!unclear_or_missing_information?.length && (
-        <>
-          <SectionHeader>Unclear or Missing Information</SectionHeader>
-          <ul style={{ margin: 0, paddingLeft: 20, color: '#6b7280', fontSize: '0.88rem', lineHeight: 1.8 }}>
-            {unclear_or_missing_information.map((text, i) => <li key={i}>{text}</li>)}
-          </ul>
-        </>
+      <ProviderSearch itemId={item.item_id} label={item.label} />
+    </div>
+  )
+}
+
+function CheckupSection({ title, items, defaultCollapsed = false }) {
+  const [open, setOpen] = useState(!defaultCollapsed)
+  if (!items?.length) return null
+  return (
+    <div style={{ marginTop: 20 }}>
+      <div
+        onClick={() => setOpen(o => !o)}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none', borderBottom: '2px solid #e5e7eb', paddingBottom: 8, marginBottom: open ? 10 : 0 }}
+      >
+        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1a1a2e', flex: 1 }}>
+          {title} <span style={{ fontSize: '0.8rem', color: '#9ca3af', fontWeight: 400 }}>({items.length})</span>
+        </h3>
+        <span style={{ fontSize: '0.78rem', color: '#6b7280' }}>{open ? '▲' : '▼'}</span>
+      </div>
+      {open && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {items.map((item, i) => <CheckupItemCard key={item.item_id || i} item={item} />)}
+        </div>
       )}
     </div>
   )
 }
+
+function CheckupPlan({ checkup_plan, verification_summary, used_demo }) {
+  if (!checkup_plan) return null
+
+  const { recommended = [], included_in_insurance = [], coming_up = [],
+    fallback_message, product_used, product_inferred } = checkup_plan
+
+  if (!recommended.length && !included_in_insurance.length && !coming_up.length && !fallback_message) return null
+
+  const official  = recommended.filter(r => r.strength === 'official')
+  const guideline = recommended.filter(r => r.strength === 'guideline')
+  const general   = recommended.filter(r => r.strength !== 'official' && r.strength !== 'guideline')
+
+  const includedAsCards = included_in_insurance.map(it => ({
+    ...it,
+    strength: 'general',
+    rec_verified: true,
+    status: 'eligible now',
+    best_option: { source: 'insurance_checkup', cost_eur: 0, label: 'Part of your annual check-up benefit' },
+  }))
+
+  return (
+    <div style={{ marginTop: 32, borderTop: '2px solid #e5e7eb', paddingTop: 24 }}>
+      <h2 style={{ margin: '0 0 16px', fontSize: '1.1rem', fontWeight: 700, color: '#1a1a2e' }}>
+        Preventive Health Plan
+      </h2>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+        {used_demo && (
+          <div style={s.noticeBox}>
+            ℹ️ Coverage data from demo policy — document extraction failed. Costs shown may not match your policy.
+          </div>
+        )}
+        {product_inferred && product_used && (
+          <div style={s.noticeBox}>
+            Looks like <strong>{product_used}</strong>, correct? If your product differs, check-up contents may vary.
+          </div>
+        )}
+        {fallback_message && (
+          <div style={{ ...s.noticeBox, borderColor: '#fcd34d', background: '#fffbeb', color: '#92400e' }}>
+            {fallback_message}
+          </div>
+        )}
+        {verification_summary && (
+          <div style={{ fontSize: '0.78rem', color: '#6b7280' }}>🔍 Quote check: {verification_summary}</div>
+        )}
+      </div>
+
+      <PlanComputationDetails checkup_plan={checkup_plan} />
+
+      <CheckupSection title="Official Recommendations" items={official} />
+      <CheckupSection title="Guideline Recommendations" items={guideline} />
+      <CheckupSection title="General Recommendations" items={general} />
+      <CheckupSection title="Included in your insurance check-up" items={includedAsCards} defaultCollapsed />
+
+      {!!coming_up.length && (
+        <div style={{ marginTop: 20 }}>
+          <h3 style={{ margin: '0 0 10px', fontSize: '1rem', fontWeight: 700, color: '#1a1a2e', borderBottom: '2px solid #e5e7eb', paddingBottom: 8 }}>
+            Coming up
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {coming_up.map((item, i) => (
+              <div key={item.item_id || i} style={{ ...s.infoCard, opacity: 0.82 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: 600, fontSize: '0.88rem', color: '#1a1a2e' }}>{item.label}</span>
+                  {item.strength && <Badge color={{ official: 'green', guideline: 'blue', general: 'gray' }[item.strength] || 'gray'}>{item.strength}</Badge>}
+                  {item.age_min && <Badge color="gray">from age {item.age_min}</Badge>}
+                </div>
+                {item.screens_for && (
+                  <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: 3 }}>Screens for: {item.screens_for}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function InsuranceAnalyzer({ onUploadSuccess }) {
   const [phase, setPhase] = useState('idle')   // idle | analyzing | result | error
@@ -370,21 +479,29 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
   }
 
   if (phase === 'result' && result) {
-    const { record, analysis } = result
+    const { record, coverage, checkup_plan, verification_summary, used_demo } = result
     return (
       <div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
           <button onClick={reset} style={s.ghostBtn}>Analyze Another</button>
         </div>
-        {analysis && !analysis.error
-          ? <AnalysisResult record={record} analysis={analysis} />
-          : (
-            <div style={s.successBox}>
-              File saved to <code>{record.filepath}</code>.
-              {analysis?.error && <span style={{ color: '#b45309', marginLeft: 8 }}>Analysis failed: {analysis.error}</span>}
-              {!analysis && <span style={{ marginLeft: 8 }}>AI analysis is only available for PDF files.</span>}
-            </div>
-          )}
+        <div style={s.uploadedBy}>
+          Analyzed for <strong>{record.name}</strong> · Age {record.age} ·{' '}
+          {record.gender.charAt(0).toUpperCase() + record.gender.slice(1)}
+        </div>
+        <ExtractionDetails coverage={coverage} />
+        {!checkup_plan && (
+          <div style={{ ...s.successBox, marginTop: 16 }}>
+            {record.filename.toLowerCase().endsWith('.pdf')
+              ? 'Could not build a plan from this document.'
+              : 'Preventive health plan is only available for PDF files.'}
+          </div>
+        )}
+        <CheckupPlan
+          checkup_plan={checkup_plan}
+          verification_summary={verification_summary}
+          used_demo={used_demo}
+        />
       </div>
     )
   }
@@ -544,4 +661,25 @@ const s = {
   infoCard: { padding: '10px 14px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fafafa' },
   qaCard: { padding: '12px 16px', border: '1px solid #e5e7eb', borderRadius: 8, background: '#fafafa' },
   empty: { color: '#9ca3af', fontSize: '0.88rem', fontStyle: 'italic', margin: '8px 0' },
+  detailBtn: {
+    background: 'none',
+    border: '1px solid #dde2e8',
+    borderRadius: 6,
+    padding: '6px 12px',
+    cursor: 'pointer',
+    fontSize: '0.82rem',
+    color: '#374151',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  noticeBox: {
+    padding: '10px 14px',
+    background: '#eff6ff',
+    color: '#1e40af',
+    border: '1px solid #bfdbfe',
+    borderRadius: 8,
+    fontSize: '0.875rem',
+    lineHeight: 1.5,
+  },
 }
