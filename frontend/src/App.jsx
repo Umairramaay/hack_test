@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import ClinicsMap from './ClinicsMap'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 
@@ -132,6 +133,11 @@ export default function App() {
             {uploading ? 'Uploading…' : 'Submit'}
           </button>
         </form>
+      </div>
+
+      <div style={styles.card}>
+        <h2 style={styles.cardTitle}>Nearby Clinics &amp; Hospitals</h2>
+        <ClinicsMap />
       </div>
 
       <div style={styles.card}>

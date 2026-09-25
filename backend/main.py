@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import uuid
@@ -33,6 +34,16 @@ app.add_middleware(
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx"}
+
+
+CLINICS_DATA_PATH = os.path.join(os.path.dirname(__file__), "clinics_data.json")
+
+
+@app.get("/clinics")
+def get_clinics():
+    with open(CLINICS_DATA_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return data
 
 
 @app.get("/hello")

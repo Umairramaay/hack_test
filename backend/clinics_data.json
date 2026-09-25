@@ -1,0 +1,264 @@
+{
+  "area": "Saldanha-Picoas-Marques de Pombal",
+  "city": "Lisbon",
+  "country": "Portugal",
+  "center": {
+    "lat": 38.7305,
+    "lng": -9.1455
+  },
+  "providers": [
+    {
+      "id": "affidea-saldanha",
+      "name": "Affidea Lisboa - Saldanha",
+      "type": "clinic",
+      "specialties": ["general_practice", "diagnostics", "radiology", "endocrinology", "pulmonology", "rheumatology", "neurology"],
+      "address": "Av. João Crisóstomo 30A, 1050-127 Lisboa",
+      "coordinates": {"lat": 38.7361741, "lng": -9.146851},
+      "opening_hours": {
+        "monday": "08:00-20:00", "tuesday": "08:00-20:00", "wednesday": "08:00-20:00",
+        "thursday": "08:00-20:00", "friday": "08:00-20:00", "saturday": "09:00-13:00", "sunday": "closed"
+      }
+    },
+    {
+      "id": "united-medical-clinic",
+      "name": "United Medical Clinic Lisbon",
+      "type": "clinic",
+      "specialties": ["general_practice", "specialists", "laboratory"],
+      "address": "Av. Defensores de Chaves 73B, 1000-114 Lisboa",
+      "coordinates": {"lat": 38.7351, "lng": -9.1435},
+      "opening_hours": {
+        "monday": "09:00-20:00", "tuesday": "09:00-20:00", "wednesday": "09:00-20:00",
+        "thursday": "09:00-20:00", "friday": "09:00-20:00", "saturday": "09:00-20:00", "sunday": "closed"
+      }
+    },
+    {
+      "id": "klinika-we-care-saldanha",
+      "name": "KlíniKa We Care - Saldanha Residence",
+      "type": "clinic",
+      "specialties": ["dentistry", "general_practice", "psychology", "neurology", "physiotherapy", "nutrition", "podology"],
+      "address": "Av. Fontes Pereira de Melo 42E, Saldanha Residence, 1050-250 Lisboa",
+      "coordinates": {"lat": 38.731944, "lng": -9.145703},
+      "opening_hours": {
+        "monday": "08:30-22:00", "tuesday": "08:30-22:00", "wednesday": "08:30-22:00",
+        "thursday": "08:30-22:00", "friday": "08:30-22:00", "saturday": "09:00-18:00", "sunday": "closed"
+      }
+    },
+    {
+      "id": "one-clinic-saldanha",
+      "name": "ONE Clinic Saldanha",
+      "type": "dental_clinic",
+      "specialties": ["dentistry", "oral_health", "orthodontics"],
+      "address": "Av. da República 6 R/C, 1050-191 Lisboa",
+      "coordinates": {"lat": 38.7342, "lng": -9.1439},
+      "opening_hours": {
+        "monday": "09:30-20:00", "tuesday": "09:30-20:00", "wednesday": "09:30-20:00",
+        "thursday": "09:30-20:00", "friday": "09:30-20:00", "saturday": "closed", "sunday": "closed"
+      }
+    },
+    {
+      "id": "dualclinic-saldanha",
+      "name": "DualClinic Saldanha",
+      "type": "dental_clinic",
+      "specialties": ["dentistry", "orthodontics", "implantology", "oral_surgery", "endodontics"],
+      "address": "Av. Casal Ribeiro 18, 1º Dto, 1000-092 Lisboa",
+      "coordinates": {"lat": 38.7330, "lng": -9.1420},
+      "opening_hours": {
+        "monday": "09:30-13:30,14:30-18:30", "tuesday": "09:30-13:30,14:30-18:30",
+        "wednesday": "09:30-13:30,14:30-18:30", "thursday": "09:30-13:30,14:30-19:30",
+        "friday": "09:30-13:30,14:30-18:30", "saturday": "09:30-13:30,14:30-18:30", "sunday": "closed"
+      }
+    },
+    {
+      "id": "go-clinic",
+      "name": "G.O.Clinic",
+      "type": "clinic",
+      "specialties": ["medical_consultation"],
+      "address": "Praça Duque de Saldanha 1, 8G, 1050-094 Lisboa",
+      "coordinates": {"lat": 38.7352, "lng": -9.1450},
+      "opening_hours": {
+        "monday": "08:00-20:00", "tuesday": "08:00-20:00", "wednesday": "08:00-20:00",
+        "thursday": "08:00-20:00", "friday": "08:00-20:00", "saturday": "closed", "sunday": "closed"
+      }
+    },
+    {
+      "id": "clinica-medica-internacional",
+      "name": "Clínica Médica Internacional de Lisboa",
+      "type": "clinic",
+      "specialties": ["general_practice", "specialists"],
+      "address": "Rua Castilho 39, 9º A, 1250-068 Lisboa",
+      "coordinates": {"lat": 38.7229, "lng": -9.1515},
+      "opening_hours": {
+        "monday": "09:00-19:00", "tuesday": "09:00-19:00", "wednesday": "09:00-19:00",
+        "thursday": "09:00-19:00", "friday": "09:00-19:00", "saturday": "closed", "sunday": "closed"
+      }
+    },
+    {
+      "id": "alegria-medical-centre",
+      "name": "Alegria Medical Centre",
+      "type": "clinic",
+      "specialties": ["general_practice", "sexual_health", "laboratory"],
+      "address": "Praça da Alegria 66A, 3º, 1250-004 Lisboa",
+      "coordinates": {"lat": 38.718261, "lng": -9.144721},
+      "opening_hours": {
+        "monday": "09:00-19:00", "tuesday": "09:00-19:00", "wednesday": "09:00-19:00",
+        "thursday": "09:00-19:00", "friday": "09:00-19:00", "saturday": "10:00-15:00", "sunday": "closed"
+      }
+    },
+    {
+      "id": "diaverum-andrade-corvo",
+      "name": "Diaverum Clínica de Hemodiálise",
+      "type": "dialysis_center",
+      "specialties": ["dialysis", "nephrology"],
+      "address": "Rua Andrade Corvo 15, 1050-007 Lisboa",
+      "coordinates": {"lat": 38.7337, "lng": -9.1468},
+      "opening_hours": {
+        "monday": "08:00-22:00", "tuesday": "08:00-22:00", "wednesday": "08:00-22:00",
+        "thursday": "08:00-22:00", "friday": "08:00-22:00", "saturday": "08:00-22:00", "sunday": "closed"
+      }
+    },
+    {
+      "id": "cligenus",
+      "name": "Cligenus CMCM",
+      "type": "clinic",
+      "specialties": ["medical_consultation"],
+      "address": "Av. da Liberdade 244, 1º, 1250-149 Lisboa",
+      "coordinates": {"lat": 38.7205, "lng": -9.1458},
+      "opening_hours": {
+        "monday": "08:00-20:00", "tuesday": "08:00-20:00", "wednesday": "08:00-20:00",
+        "thursday": "08:00-20:00", "friday": "08:00-20:00", "saturday": "08:00-13:00", "sunday": "closed"
+      }
+    },
+    {
+      "id": "clinica-das-horas",
+      "name": "Clínica das Horas",
+      "type": "clinic",
+      "specialties": ["psychotherapy", "mental_health"],
+      "address": "Av. João Crisóstomo 18, 3º Esq, 1000-179 Lisboa",
+      "coordinates": {"lat": 38.73638, "lng": -9.14462},
+      "opening_hours": {
+        "monday": "by_appointment", "tuesday": "by_appointment", "wednesday": "by_appointment",
+        "thursday": "by_appointment", "friday": "by_appointment", "saturday": "closed", "sunday": "closed"
+      }
+    },
+    {
+      "id": "cfo-saldanha",
+      "name": "CFO - Clínica de Fisioterapia e Ortopedia do Saldanha",
+      "type": "physiotherapy_clinic",
+      "specialties": ["physiotherapy", "orthopedics"],
+      "address": "Av. da República 6, 3º Esq, 1050-191 Lisboa",
+      "coordinates": {"lat": 38.7341, "lng": -9.1438},
+      "opening_hours": {
+        "monday": "09:00-19:00", "tuesday": "09:00-19:00", "wednesday": "09:00-19:00",
+        "thursday": "09:00-19:00", "friday": "09:00-19:00", "saturday": "closed", "sunday": "closed"
+      }
+    },
+    {
+      "id": "sams-centro-clinico",
+      "name": "Centro Clínico de Lisboa - SAMS",
+      "type": "hospital",
+      "specialties": ["general_practice", "specialists", "diagnostics"],
+      "address": "Rua Fialho de Almeida 21, 1070-128 Lisboa",
+      "coordinates": {"lat": 38.73424, "lng": -9.15808},
+      "opening_hours": {
+        "monday": "08:00-20:00", "tuesday": "08:00-20:00", "wednesday": "08:00-20:00",
+        "thursday": "08:00-20:00", "friday": "08:00-20:00", "saturday": "08:00-14:00", "sunday": "closed"
+      }
+    },
+    {
+      "id": "santa-marta-hospital",
+      "name": "Hospital de Santa Marta",
+      "type": "hospital",
+      "specialties": ["hospital", "cardiology", "thoracic_surgery", "vascular_surgery"],
+      "address": "Rua de Santa Marta 50, 1169-024 Lisboa",
+      "coordinates": {"lat": 38.7238, "lng": -9.1432},
+      "opening_hours": {
+        "monday": "08:00-20:00", "tuesday": "08:00-20:00", "wednesday": "08:00-20:00",
+        "thursday": "08:00-20:00", "friday": "08:00-20:00", "saturday": "12:00-20:00", "sunday": "12:00-20:00"
+      }
+    },
+    {
+      "id": "hospital-capuchos",
+      "name": "Hospital de Santo António dos Capuchos",
+      "type": "hospital",
+      "specialties": ["hospital", "emergency", "specialists"],
+      "address": "Alameda de Santo António dos Capuchos, 1169-050 Lisboa",
+      "coordinates": {"lat": 38.7222, "lng": -9.14243},
+      "opening_hours": {
+        "monday": "24_hours", "tuesday": "24_hours", "wednesday": "24_hours",
+        "thursday": "24_hours", "friday": "24_hours", "saturday": "24_hours", "sunday": "24_hours"
+      }
+    },
+    {
+      "id": "hospital-sao-jose",
+      "name": "Hospital de São José",
+      "type": "hospital",
+      "specialties": ["hospital", "emergency", "specialists"],
+      "address": "Rua José António Serrano, 1150-199 Lisboa",
+      "coordinates": {"lat": 38.71818, "lng": -9.138},
+      "opening_hours": {
+        "monday": "24_hours", "tuesday": "24_hours", "wednesday": "24_hours",
+        "thursday": "24_hours", "friday": "24_hours", "saturday": "24_hours", "sunday": "24_hours"
+      }
+    },
+    {
+      "id": "aeger-prima",
+      "name": "Clínica AEGER Prima",
+      "type": "medical_center",
+      "specialties": ["medical_consultation"],
+      "address": "Rua da Mãe d'Água 15B, 1250-154 Lisboa",
+      "coordinates": {"lat": 38.7195, "lng": -9.1488},
+      "opening_hours": {
+        "monday": "09:00-19:00", "tuesday": "09:00-19:00", "wednesday": "09:00-19:00",
+        "thursday": "09:00-19:00", "friday": "09:00-19:00", "saturday": "closed", "sunday": "closed"
+      }
+    },
+    {
+      "id": "tejemed",
+      "name": "TejoMed",
+      "type": "clinic",
+      "specialties": ["medical_consultation"],
+      "address": "Praça da Alegria 66A, 3º, 1250-004 Lisboa",
+      "coordinates": {"lat": 38.7183, "lng": -9.1446},
+      "opening_hours": {
+        "monday": "09:00-18:00", "tuesday": "09:00-18:00", "wednesday": "09:00-18:00",
+        "thursday": "09:00-18:00", "friday": "09:00-18:00", "saturday": "closed", "sunday": "closed"
+      }
+    },
+    {
+      "id": "international-advanced-health",
+      "name": "International Advanced Health",
+      "type": "clinic",
+      "specialties": ["medical_consultation"],
+      "address": "Rua Alexandre Herculano, 1250-008 Lisboa",
+      "coordinates": {"lat": 38.7197, "lng": -9.1458},
+      "opening_hours": {
+        "monday": "09:00-18:00", "tuesday": "09:00-18:00", "wednesday": "09:00-18:00",
+        "thursday": "09:00-18:00", "friday": "09:00-18:00", "saturday": "closed", "sunday": "closed"
+      }
+    },
+    {
+      "id": "unilabs-liberdade",
+      "name": "Unilabs Lisboa",
+      "type": "diagnostic_center",
+      "specialties": ["laboratory", "diagnostics"],
+      "address": "Av. da Liberdade 202, 1250-147 Lisboa",
+      "coordinates": {"lat": 38.7208, "lng": -9.1453},
+      "opening_hours": {
+        "monday": "08:00-19:00", "tuesday": "08:00-19:00", "wednesday": "08:00-19:00",
+        "thursday": "08:00-19:00", "friday": "08:00-19:00", "saturday": "08:00-13:00", "sunday": "closed"
+      }
+    },
+    {
+      "id": "clinica-liberty",
+      "name": "Clínica Liberty",
+      "type": "clinic",
+      "specialties": ["medical_specialists", "aesthetic_medicine", "surgery"],
+      "address": "Av. da Liberdade 129, 4º D, 1250-140 Lisboa",
+      "coordinates": {"lat": 38.7169, "lng": -9.1439},
+      "opening_hours": {
+        "monday": "10:00-20:00", "tuesday": "10:00-20:00", "wednesday": "10:00-20:00",
+        "thursday": "10:00-20:00", "friday": "10:00-20:00", "saturday": "closed", "sunday": "closed"
+      }
+    }
+  ]
+}
