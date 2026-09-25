@@ -1,2 +1,10 @@
 fastapi
 uvicorn[standard]
+httpx
+icalendar
+sqlalchemy
+alembic
+psycopg2-binary
+python-multipart
+psycopg[binary]
+python-dotenv
