@@ -17,12 +17,23 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GITHUB_TOKEN,REPO
+          envs: GITHUB_TOKEN,REPO,APP_NAME,API_SECRET,VITE_API_BASE_URL
           script: |
-            cd ~/couples-app
+            cd ~/hack_test
             git pull https://x-access-token:$GITHUB_TOKEN@github.com/$REPO.git main
+
+            # Write .env from GitHub secrets (never committed to the repo)
+            cat > .env <<EOF
+            APP_NAME=$APP_NAME
+            API_SECRET=$API_SECRET
+            VITE_API_BASE_URL=$VITE_API_BASE_URL
+            EOF
+
             chmod +x deploy.sh
             ./deploy.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
+          APP_NAME: ${{ secrets.APP_NAME }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
