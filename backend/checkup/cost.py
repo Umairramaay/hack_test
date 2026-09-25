@@ -28,7 +28,7 @@ def _component_cost(service_id: str, coverage_by_service: dict) -> tuple:
             text += f" (min €{min_eur:g})"
         return (min_eur, text, ev)
     if ntype == "network_discount":
-        return (0, "network price, discount only", ev)
+        return (0, "Discounted network price", ev)
     if ntype == "not_covered":
         return (None, "not covered", ev)
     return (0, "not stated in your policy", ev)

@@ -234,7 +234,77 @@ function CheckupItemCard({ item }) {
         </div>
       )}
 
+      {!isFree && <PriceEstimate label={item.label} services={(bo.breakdown || []).map(b => b.service_id)} />}
+
       <ProviderSearch itemId={item.item_id} label={item.label} />
+    </div>
+  )
+}
+
+// Optional: asks the backend to search the web for typical private prices in Portugal.
+function PriceEstimate({ label, services }) {
+  const [state, setState] = useState('idle') // idle | loading | done | error
+  const [data, setData] = useState(null)
+  const [error, setError] = useState('')
+
+  async function fetchEstimate() {
+    setState('loading')
+    try {
+      const res = await fetch(`${API_BASE}/api/price-estimate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label, services }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.detail || `HTTP ${res.status}`)
+      setData(json)
+      setState('done')
+    } catch (err) {
+      setError(err.message)
+      setState('error')
+    }
+  }
+
+  if (state === 'idle') {
+    return (
+      <button onClick={fetchEstimate} style={s.estimateBtn}>
+        ✨ Get price estimate
+      </button>
+    )
+  }
+  if (state === 'loading') {
+    return (
+      <div style={{ ...s.estimateBox, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={s.miniSpinner} />
+        <span style={{ color: '#475569' }}>Searching prices across Portuguese clinics…</span>
+      </div>
+    )
+  }
+  if (state === 'error') {
+    return (
+      <div style={{ ...s.estimateBox, background: '#fef2f2', color: '#991b1b' }}>
+        {error} <button onClick={fetchEstimate} style={{ ...s.linkBtn, padding: 0, marginLeft: 6 }}>Retry</button>
+      </div>
+    )
+  }
+  return (
+    <div style={s.estimateBox}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+        <span style={s.estimateLabel}>Estimated private price</span>
+        <span style={s.estimateRange}>€{data.min_eur} – €{data.max_eur}</span>
+        {data.typical_eur != null && <span style={{ color: '#64748b' }}>typically ~€{data.typical_eur}</span>}
+      </div>
+      {data.summary && <div style={{ color: '#475569', marginTop: 4 }}>{data.summary}</div>}
+      {data.sources?.length > 0 && (
+        <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {data.sources.map(src => (
+            <a key={src.url} href={src.url} target="_blank" rel="noreferrer" style={s.sourceChip}>
+              {src.title.length > 40 ? `${src.title.slice(0, 40)}…` : src.title}
+            </a>
+          ))}
+        </div>
+      )}
+      <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 6 }}>AI estimate from web search, may vary by clinic. Your network discount may lower this.</div>
     </div>
   )
 }
@@ -328,6 +398,7 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
   const [form, setForm] = useState({ name: '', age: '', gender: '' })
   const [file, setFile] = useState(null)
   const [dragOver, setDragOver] = useState(false)
+  const [tab, setTab] = useState('coverage')
   const fileRef = useRef()
   const stepTimer = useRef(null)
 
@@ -386,6 +457,7 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
     setErrorMsg('')
     setForm({ name: '', age: '', gender: '' })
     setFile(null)
+    setTab('coverage')
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -435,6 +507,14 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
   if (phase === 'result' && result) {
     const { record, coverage, checkup_plan, used_demo } = result
     const initials = record.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+    const coveredCount = (coverage?.rows || []).filter(isMentioned).length
+    const planCount = checkup_plan
+      ? (checkup_plan.recommended?.length || 0) + (checkup_plan.included_in_insurance?.length || 0)
+      : null
+    const tabs = [
+      { id: 'coverage', label: 'Coverage', count: coverage ? coveredCount : null },
+      { id: 'plan', label: 'Preventive health plan', count: planCount },
+    ]
     return (
       <div>
         <div style={s.profile}>
@@ -448,16 +528,35 @@ export default function InsuranceAnalyzer({ onUploadSuccess }) {
           <button onClick={reset} style={s.ghostBtn}>New analysis</button>
         </div>
 
-        <CoverageSection coverage={coverage} />
+        <div style={s.tabs} role="tablist">
+          {tabs.map(t => (
+            <button
+              key={t.id}
+              role="tab"
+              aria-selected={tab === t.id}
+              onClick={() => setTab(t.id)}
+              style={{ ...s.tab, ...(tab === t.id ? s.tabActive : {}) }}
+            >
+              {t.label}
+              {t.count != null && <span style={{ ...s.tabCount, ...(tab === t.id ? s.tabCountActive : {}) }}>{t.count}</span>}
+            </button>
+          ))}
+        </div>
 
-        {!checkup_plan && (
-          <div style={{ ...s.notice, marginTop: 20 }}>
-            {record.filename.toLowerCase().endsWith('.pdf')
-              ? 'We could not build a plan from this document.'
-              : 'The preventive health plan is only available for PDF files.'}
-          </div>
-        )}
-        <CheckupPlan checkup_plan={checkup_plan} used_demo={used_demo} />
+        {/* Both tabs stay mounted so fetched price estimates survive switching. */}
+        <div style={{ display: tab === 'coverage' ? 'block' : 'none' }}>
+          <CoverageSection coverage={coverage} />
+        </div>
+        <div style={{ display: tab === 'plan' ? 'block' : 'none' }}>
+          {!checkup_plan && (
+            <div style={{ ...s.notice, marginTop: 20 }}>
+              {record.filename.toLowerCase().endsWith('.pdf')
+                ? 'We could not build a plan from this document.'
+                : 'The preventive health plan is only available for PDF files.'}
+            </div>
+          )}
+          <CheckupPlan checkup_plan={checkup_plan} used_demo={used_demo} />
+        </div>
       </div>
     )
   }
@@ -592,6 +691,38 @@ const s = {
   price: { fontWeight: 700, fontSize: '1.05rem' },
   evidence: { marginTop: 12, background: '#f8fafc', borderRadius: 8, padding: '10px 14px', fontSize: '0.82rem', color: '#334155' },
   quote: { color: '#64748b', fontStyle: 'italic', marginTop: 2 },
+
+  tabs: {
+    display: 'flex', gap: 4, marginTop: 20, padding: 4, background: '#e2e8f0', borderRadius: 12,
+    width: 'fit-content', maxWidth: '100%', overflowX: 'auto',
+  },
+  tab: {
+    display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', border: 'none', borderRadius: 9,
+    background: 'transparent', color: '#475569', fontWeight: 600, fontSize: '0.9rem', fontFamily: 'inherit',
+    cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s',
+  },
+  tabActive: { background: '#fff', color: '#0f172a', boxShadow: '0 1px 3px rgba(15,23,42,0.12)' },
+  tabCount: { background: '#cbd5e1', color: '#475569', borderRadius: 999, padding: '1px 8px', fontSize: '0.74rem' },
+  tabCountActive: { background: '#e0e7ff', color: '#4338ca' },
+
+  estimateBtn: {
+    marginTop: 12, padding: '7px 14px', fontSize: '0.82rem', fontWeight: 600, fontFamily: 'inherit',
+    background: '#eef2ff', color: '#4338ca', border: '1px solid #c7d2fe', borderRadius: 999, cursor: 'pointer',
+  },
+  estimateBox: {
+    marginTop: 12, padding: '12px 14px', borderRadius: 10, fontSize: '0.84rem',
+    background: 'linear-gradient(135deg,#eef2ff,#f0f9ff)', border: '1px solid #e0e7ff',
+  },
+  estimateLabel: { fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' },
+  estimateRange: { fontSize: '1.15rem', fontWeight: 800, color: '#312e81' },
+  sourceChip: {
+    fontSize: '0.72rem', color: '#4338ca', background: '#fff', border: '1px solid #e0e7ff',
+    borderRadius: 999, padding: '2px 8px', textDecoration: 'none',
+  },
+  miniSpinner: {
+    width: 14, height: 14, borderRadius: '50%', border: '2px solid #c7d2fe', borderTopColor: '#4f46e5',
+    animation: 'spin 0.8s linear infinite', display: 'inline-block', flexShrink: 0,
+  },
 
   chips: { display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 },
   chip: { background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 999, padding: '6px 12px', fontSize: '0.82rem' },

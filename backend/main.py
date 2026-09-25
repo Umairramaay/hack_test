@@ -17,7 +17,9 @@ from ai_client import analyze_insurance_pdf
 from checkup.extract import extract_coverage, find_policy_start_date, pdf_pages, verify_quotes
 from checkup.match import build_plan, infer_product
 from models import Base, UserInsurance
+from price_estimate import estimate_price
 from provider_search import search_providers, VALID_SERVICE_TYPES
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -76,6 +78,22 @@ async def get_providers(service_type: str, lat: float, lng: float):
         "location":     {"latitude": lat, "longitude": lng},
         "providers":    providers,
     }
+
+
+# ─── Price estimate (LLM + web search) ───────────────────────────────────────
+
+class PriceEstimateRequest(BaseModel):
+    label: str
+    services: list[str] = []
+
+
+@app.post("/api/price-estimate")
+async def price_estimate(req: PriceEstimateRequest):
+    try:
+        return await estimate_price(req.label, req.services)
+    except Exception as e:
+        logger.exception("[PRICE] Estimate failed for %s", req.label)
+        raise HTTPException(status_code=502, detail=f"Could not estimate a price: {e}")
 
 
 # ─── Clinics (static data) ────────────────────────────────────────────────────
