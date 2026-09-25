@@ -693,13 +693,14 @@ const s = {
   quote: { color: '#64748b', fontStyle: 'italic', marginTop: 2 },
 
   tabs: {
-    display: 'flex', gap: 4, marginTop: 20, padding: 4, background: '#e2e8f0', borderRadius: 12,
-    width: 'fit-content', maxWidth: '100%', overflowX: 'auto',
+    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginTop: 20, padding: 6,
+    background: '#e2e8f0', borderRadius: 16, width: '100%',
   },
   tab: {
-    display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', border: 'none', borderRadius: 9,
-    background: 'transparent', color: '#475569', fontWeight: 600, fontSize: '0.9rem', fontFamily: 'inherit',
-    cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.15s',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '16px 12px',
+    border: 'none', borderRadius: 12, background: 'transparent', color: '#475569', fontWeight: 700,
+    fontSize: '1.05rem', fontFamily: 'inherit', cursor: 'pointer', transition: 'all 0.15s', minWidth: 0,
+    textAlign: 'center',
   },
   tabActive: { background: '#fff', color: '#0f172a', boxShadow: '0 1px 3px rgba(15,23,42,0.12)' },
   tabCount: { background: '#cbd5e1', color: '#475569', borderRadius: 999, padding: '1px 8px', fontSize: '0.74rem' },
