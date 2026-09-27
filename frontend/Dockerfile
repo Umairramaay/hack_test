@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Receive the API URL at build time so Vite can bake it into the bundle.
 # VITE_* variables are public — never pass secrets here.
-ARG VITE_API_BASE_URL=http://localhost:8001
+ARG VITE_API_BASE_URL=http://localhost:8000
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 COPY package.json .
