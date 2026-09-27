@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: insurance
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
@@ -24,7 +24,7 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/insurance
     ports:
-      - "8000:8000"
+      - "8001:8000"
     volumes:
       - ./data/uploads:/app/uploads
     depends_on:
@@ -37,4 +37,4 @@ services:
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
     ports:
-      - "3000:80"
+      - "3001:80"
